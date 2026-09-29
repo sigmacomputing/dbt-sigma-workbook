@@ -1,0 +1,916 @@
+version: 2
+
+# Argument names and types here are validated by dbt against each macro's signature (dbt >= 1.10 warns
+# on a mismatch; dbt 2.x - Fusion - is stricter). Keep them in sync with the macro definitions.
+
+macros:
+  # ---------------------------------------------------------------- workbook
+  - name: workbook
+    description: |
+      Top-level assembler. Turns pages into a workbook spec in Sigma's code representation and validates it at parse time (empty workbook/page, duplicate page names, colliding element ids). By default the result is the request body of `POST /v2/workbooks`: `{name, folderId, description, contents: {schemaVersion, kind, pages, elements, settings, layout}}`.
+    arguments:
+      - name: name
+        type: string
+        description: Workbook name in Sigma.
+      - name: pages
+        type: list[any]
+        description: List of `sigma_workbook.page(...)` results. Page names must be unique.
+      - name: theme
+        type: dict[string,any]
+        description: Per-workbook theme overrides, deep-merged over the `sigma_workbook_theme` project var. Default `{}`.
+      - name: folder_id
+        type: string
+        description: Sigma folder id. Defaults to the `sigma_folder_id` project var.
+      - name: workbook_id
+        type: string
+        description: Existing Sigma workbook id, to update it instead of creating a new workbook. Omit on first create.
+      - name: description
+        type: string
+        description: Workbook description.
+      - name: output
+        type: string
+        description: "`contents` (default) or `spec` (the deprecated nested `pages[].elements` shape). Defaults to the `sigma_workbook_format` project var."
+
+  - name: page
+    description: A page of elements. Elements may be passed individually or as lists (composites such as `dashboard_header` return lists); they are placed left to right on Sigma's 24-column grid, wrapping when a row fills.
+    arguments:
+      - name: name
+        type: string
+        description: Page name.
+      - name: elements
+        type: list[any]
+        description: Elements and/or lists of elements, in reading order. Must not be empty.
+      - name: key
+        type: string
+        description: Identity the page id is derived from. Defaults to `name`; set it if you rename a page and want to keep its id.
+
+  - name: materialize
+    description: Attaches a composed spec to the calling model's `meta.sigma_workbook` (via `config(meta=...)`, which replaces `meta` wholesale). The spec lands in `manifest.json` on `dbt parse`.
+    arguments:
+      - name: spec
+        type: dict[string,any]
+        description: The result of `sigma_workbook.workbook()` or `sigma_workbook.simple_dashboard()`.
+      - name: materialized
+        type: string
+        description: dbt materialization for the (otherwise empty) model. Default `view`; `ephemeral` creates nothing in the warehouse.
+
+  - name: simple_dashboard
+    description: A complete one-page dashboard from data alone - title, filters, KPI band, chart rows, detail table - built entirely from the public primitives. Filters are wired to every KPI, chart and the table.
+    arguments:
+      - name: name
+        type: string
+        description: Workbook and page name.
+      - name: source
+        type: any
+        description: A sigma_workbook source (`from_ref`, `from_data_model`, `warehouse_table`, ...).
+      - name: kpis
+        type: list[any]
+        description: "List of `{value, name, format, compare_to, timeline, period, trend}` mappings. Default `[]`."
+      - name: charts
+        type: list[any]
+        description: "List of chart mappings with a `type` of bar, line, area, pie, donut or scatter, plus that macro's arguments (`x`/`y` or `category`/`value`, `name`, `color`, ...). Default `[]`."
+      - name: filters
+        type: list[any]
+        description: "List of `{type, name, column}` mappings; `type` is list (default), date_range or text. Default `[]`."
+      - name: table_columns
+        type: list[any]
+        description: Fields for the detail table. Omit for no table.
+      - name: subtitle
+        type: string
+        description: Muted line under the title.
+      - name: theme
+        type: dict[string,any]
+        description: Per-workbook theme overrides. Default `{}`.
+      - name: table_name
+        type: string
+        description: Title of the detail table. Default `Detail`.
+
+  # ---------------------------------------------------------------- sources
+  - name: from_ref
+    description: A dbt model, seed or snapshot as a warehouse-table source. Calls `ref()` so the workbook model sits downstream of it in the DAG. The physical path defaults to the target's database and schema plus the model name (parse time cannot resolve other models' relations); pass `schema`/`identifier` for custom schemas or aliases.
+    arguments:
+      - name: model_name
+        type: string
+        description: dbt model name.
+      - name: database
+        type: string
+        description: Override the database. Defaults to `target.database`.
+      - name: schema
+        type: string
+        description: Override the schema. Defaults to `target.schema`.
+      - name: identifier
+        type: string
+        description: Override the table name. Defaults to `model_name`.
+      - name: connection_id
+        type: string
+        description: Sigma connection id. Defaults to the `sigma_connection_id` project var.
+
+  - name: warehouse_table
+    description: A warehouse table addressed by its physical path.
+    arguments:
+      - name: path
+        type: list[str]
+        description: "`[database, schema, table]`."
+      - name: connection_id
+        type: string
+        description: Sigma connection id. Defaults to the `sigma_connection_id` project var.
+
+  - name: data_model
+    description: A table inside a Sigma data model, addressed by the data model id and the table's `key`. The element id is derived exactly as `sigma_data_models` derives it, so the two packages agree without coordination.
+    arguments:
+      - name: data_model_id
+        type: string
+        description: The Sigma data model's id.
+      - name: table_key
+        type: string
+        description: The `key` given to the table in `sigma_data_models.table(...)`.
+      - name: identifier
+        type: string
+        description: Same value passed to that `sigma_data_models.table()` call. Defaults to `table_key`.
+      - name: database
+        type: string
+        description: Same value passed to that call. Defaults to `target.database`.
+      - name: schema
+        type: string
+        description: Same value passed to that call. Defaults to `target.schema`.
+      - name: table_name
+        type: string
+        description: The table's display name in the data model, used as the `[Table Name/Column]` prefix. Defaults to the title-cased `table_key`; set it if `sigma_data_models.table()` was given a custom `display_name`.
+
+  - name: from_data_model
+    description: '`data_model` for a dbt model built with `sigma_data_models.materialize()`. `ref()`s it for lineage and looks its Sigma id up in the `sigma_data_model_ids` project var; an unrecorded id becomes an `unresolved:<model>` placeholder that the export script refuses to push.'
+    arguments:
+      - name: model_name
+        type: string
+        description: dbt model name of the data model.
+      - name: table_key
+        type: string
+        description: The table's `key` in that data model.
+      - name: data_model_id
+        type: string
+        description: Explicit Sigma data model id; skips the var lookup.
+      - name: identifier
+        type: string
+        description: As in `data_model`.
+      - name: database
+        type: string
+        description: As in `data_model`.
+      - name: schema
+        type: string
+        description: As in `data_model`.
+      - name: table_name
+        type: string
+        description: As in `data_model`.
+
+  - name: element
+    description: Another element in the same workbook as a source (a chart on a table). Element macros also accept the element itself as `source=`.
+    arguments:
+      - name: el
+        type: any
+        description: An element built by a sigma_workbook macro.
+
+  # ---------------------------------------------------------------- fields / formats
+  - name: field
+    description: "A field with options - a formula plus optional display name, format and description. Wherever a field is expected a bare string also works: a lowercase name is a source column (`order_date` -> `[Order Date]`), anything containing `[`, `(` or uppercase is a formula written as-is."
+    arguments:
+      - name: formula
+        type: string
+        description: Sigma formula or column name.
+      - name: name
+        type: string
+        description: Display name.
+      - name: format
+        type: dict[string,any]
+        description: A `sigma_workbook.format_*()` result.
+      - name: description
+        type: string
+        description: Column description.
+
+  - name: format
+    description: Generic number/datetime format constructor, validated against the option keys Sigma documents.
+    arguments:
+      - name: kind
+        type: string
+        description: "`number` or `datetime`."
+      - name: options
+        type: dict[string,any]
+        description: "Option keys: number - formatString, decimalSymbol, digitGroupingSymbol, digitGroupingSize, currencySymbol, prefix, suffix, displayNullAs; datetime - formatString."
+
+  - name: format_number
+    description: Integer / fixed-decimal number with thousands separators.
+    arguments:
+      - name: decimals
+        type: int
+        description: Decimal places. Default 0.
+
+  - name: format_currency
+    description: Currency with thousands separators.
+    arguments:
+      - name: decimals
+        type: int
+        description: Decimal places. Default 0.
+      - name: symbol
+        type: string
+        description: Currency symbol. Default `$`.
+
+  - name: format_percent
+    description: Percentage.
+    arguments:
+      - name: decimals
+        type: int
+        description: Decimal places. Default 1.
+
+  - name: format_date
+    description: Datetime format using strftime-style tokens.
+    arguments:
+      - name: pattern
+        type: string
+        description: Default `%b %d, %Y`.
+
+  # ---------------------------------------------------------------- elements
+  - name: table
+    description: A table element. `columns` are shown in the order given.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: columns
+        type: list[any]
+        description: Fields to show. Required.
+      - name: name
+        type: string
+        description: Title. Also the identity the id is derived from unless `key` is set.
+      - name: key
+        type: string
+        description: Explicit identity for the element id. Required when two elements of the same kind share a name.
+      - name: w
+        type: int
+        description: Width in grid columns (max 24). Default 24.
+      - name: h
+        type: int
+        description: Height in grid rows. Default 14.
+      - name: sort
+        type: list[any]
+        description: "Sort items - a field, or a `(field, 'asc'|'desc')` pair. Default `[]`."
+      - name: description
+        type: string
+        description: Description text.
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look (see `sigma_workbook_theme.cards`).
+
+  - name: kpi
+    description: A KPI tile. Give it context with `compare_to` (another measure) or `timeline` + `period` (latest period vs the one before).
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: value
+        type: any
+        description: The measure - a formula or `sigma_workbook.field(...)`.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Width in grid columns. Default 6 (`kpi_row` resizes).
+      - name: h
+        type: int
+        description: Height in rows. Default 5.
+      - name: format
+        type: dict[string,any]
+        description: Format for the value.
+      - name: compare_to
+        type: any
+        description: Measure to compare against.
+      - name: compare_label
+        type: string
+        description: Label for the comparison. Default `plan`.
+      - name: timeline
+        type: string
+        description: Date field; the value becomes the latest period's, compared with the previous one.
+      - name: period
+        type: string
+        description: Truncation grain for `timeline` - year, quarter, month, week, day, hour... Default `month`.
+      - name: trend
+        type: bool
+        description: With `timeline`, show a sparkline. Default false.
+      - name: direction
+        type: string
+        description: "`higher` (default) or `lower` is better - decides good/bad coloring of the comparison."
+      - name: description
+        type: string
+        description: Small line under the value.
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: bar_chart
+    description: Bar chart. Sorted by its first measure, descending, unless `sort_by` says otherwise. Single-series charts use the theme's primary color.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: x
+        type: any
+        description: Category field.
+      - name: y
+        type: any
+        description: Measure field, or a list of them.
+      - name: color
+        type: any
+        description: Field to split series by.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 12.
+      - name: h
+        type: int
+        description: Default 14.
+      - name: description
+        type: string
+        description: Description text.
+      - name: sort_by
+        type: any
+        description: "`x`, `y` (default), a field, or none."
+      - name: sort_direction
+        type: string
+        description: "`asc` or `desc` (default)."
+      - name: stacking
+        type: string
+        description: "`stacked` or `normalized`."
+      - name: labels
+        type: bool
+        description: Show data labels. Default false.
+      - name: legend
+        type: bool
+        description: "`false` hides the legend."
+      - name: horizontal
+        type: bool
+        description: Horizontal bars. Default false.
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: line_chart
+    description: Line chart. Keeps axis order unless `sort_by` is set.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: x
+        type: any
+        description: Axis field (usually a truncated date).
+      - name: y
+        type: any
+        description: Measure field, or a list of them.
+      - name: color
+        type: any
+        description: Field to split series by.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 12.
+      - name: h
+        type: int
+        description: Default 14.
+      - name: description
+        type: string
+        description: Description text.
+      - name: sort_by
+        type: any
+        description: "`x`, `y`, a field, or none (default)."
+      - name: sort_direction
+        type: string
+        description: "`asc` (default) or `desc`."
+      - name: labels
+        type: bool
+        description: Show data labels. Default false.
+      - name: legend
+        type: bool
+        description: "`false` hides the legend."
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: area_chart
+    description: Area chart; like `line_chart` plus `stacking`.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: x
+        type: any
+        description: Axis field.
+      - name: y
+        type: any
+        description: Measure field, or a list of them.
+      - name: color
+        type: any
+        description: Field to split series by.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 12.
+      - name: h
+        type: int
+        description: Default 14.
+      - name: description
+        type: string
+        description: Description text.
+      - name: sort_by
+        type: any
+        description: "`x`, `y`, a field, or none (default)."
+      - name: sort_direction
+        type: string
+        description: "`asc` (default) or `desc`."
+      - name: stacking
+        type: string
+        description: "`stacked` or `normalized`."
+      - name: labels
+        type: bool
+        description: Show data labels. Default false.
+      - name: legend
+        type: bool
+        description: "`false` hides the legend."
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: scatter_chart
+    description: Scatter chart. `x` and `y` are both measures; `size` scales the marks.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: x
+        type: any
+        description: X measure.
+      - name: y
+        type: any
+        description: Y measure, or a list of them.
+      - name: color
+        type: any
+        description: Field to split series by.
+      - name: size
+        type: any
+        description: Measure that scales the marks.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 12.
+      - name: h
+        type: int
+        description: Default 14.
+      - name: description
+        type: string
+        description: Description text.
+      - name: legend
+        type: bool
+        description: "`false` hides the legend."
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: pie_chart
+    description: Pie chart of a measure by category.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: category
+        type: any
+        description: Slice field.
+      - name: value
+        type: any
+        description: Measure.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 8.
+      - name: h
+        type: int
+        description: Default 14.
+      - name: description
+        type: string
+        description: Description text.
+      - name: labels
+        type: bool
+        description: Percent labels on slices. Default true.
+      - name: legend
+        type: bool
+        description: "`false` hides the legend."
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: donut_chart
+    description: Donut chart; like `pie_chart` plus an optional measure in the hole.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: category
+        type: any
+        description: Slice field.
+      - name: value
+        type: any
+        description: Measure.
+      - name: hole_value
+        type: any
+        description: Measure shown in the middle.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 8.
+      - name: h
+        type: int
+        description: Default 14.
+      - name: description
+        type: string
+        description: Description text.
+      - name: labels
+        type: bool
+        description: Percent labels on slices. Default true.
+      - name: legend
+        type: bool
+        description: "`false` hides the legend."
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: pivot_table
+    description: Pivot table. Give at least one of `rows` / `cols`.
+    arguments:
+      - name: source
+        type: any
+        description: A source or element.
+      - name: values
+        type: any
+        description: Measure field, or a list of them.
+      - name: rows
+        type: any
+        description: Row grouping field, or a list.
+      - name: cols
+        type: any
+        description: Column grouping field, or a list.
+      - name: name
+        type: string
+        description: Title.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 24.
+      - name: h
+        type: int
+        description: Default 14.
+      - name: description
+        type: string
+        description: Description text.
+      - name: style
+        type: dict[string,any]
+        description: Overrides the default card look.
+
+  - name: text
+    description: A markdown text element.
+    arguments:
+      - name: body
+        type: string
+        description: Markdown body (inline HTML spans allowed).
+      - name: key
+        type: string
+        description: Explicit identity for the element id. Defaults to the body.
+      - name: w
+        type: int
+        description: Default 24.
+      - name: h
+        type: int
+        description: Default 2.
+      - name: align
+        type: string
+        description: "Vertical alignment - top (default), center, bottom."
+
+  - name: title
+    description: Page heading - a level-1 title with an optional muted subtitle.
+    arguments:
+      - name: text
+        type: string
+        description: Title text.
+      - name: subtitle
+        type: string
+        description: Muted line underneath.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 24.
+      - name: h
+        type: int
+        description: Default 3.
+
+  - name: heading
+    description: Section heading, one step below `title`.
+    arguments:
+      - name: text
+        type: string
+        description: Heading text.
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: w
+        type: int
+        description: Default 24.
+      - name: h
+        type: int
+        description: Default 2.
+
+  - name: divider
+    description: A rule between sections. Give repeated dividers distinct keys.
+    arguments:
+      - name: key
+        type: string
+        description: Element identity. Default `divider`.
+      - name: direction
+        type: string
+        description: "`horizontal` (default) or `vertical`."
+      - name: w
+        type: int
+        description: Default 24.
+      - name: h
+        type: int
+        description: Default 1.
+
+  - name: container
+    description: Groups elements on their own 24-column grid. Invisible by default; height derived from children unless `h` is set.
+    arguments:
+      - name: elements
+        type: list[any]
+        description: Child elements. Must not be empty.
+      - name: key
+        type: string
+        description: Element identity. Required.
+      - name: name
+        type: string
+        description: Optional name.
+      - name: w
+        type: int
+        description: Default 24.
+      - name: h
+        type: int
+        description: Height in rows; derived when omitted.
+      - name: card
+        type: bool
+        description: Give the container the card look. Default false.
+      - name: style
+        type: dict[string,any]
+        description: Explicit style; overrides `card`.
+
+  # ---------------------------------------------------------------- controls
+  - name: list_control
+    description: List-of-values control. `targets` are `(element, field)` pairs; the first supplies the selectable values. A target element that lacks the column gets it added.
+    arguments:
+      - name: name
+        type: string
+        description: Control label; also derives the default `controlId`.
+      - name: targets
+        type: list[any]
+        description: "`(element, field)` pairs."
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: control_id
+        type: string
+        description: "Sigma `controlId` used in formulas. Default: lowercase dash-separated `name`."
+      - name: multiple
+        type: bool
+        description: Multi-select. Default true.
+      - name: default
+        type: list[any]
+        description: Pre-selected values.
+      - name: w
+        type: int
+        description: Default 6.
+      - name: h
+        type: int
+        description: Default 2.
+
+  - name: date_range_control
+    description: Date range control (between two dates).
+    arguments:
+      - name: name
+        type: string
+        description: Control label.
+      - name: targets
+        type: list[any]
+        description: "`(element, field)` pairs."
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: control_id
+        type: string
+        description: Sigma `controlId`.
+      - name: w
+        type: int
+        description: Default 6.
+      - name: h
+        type: int
+        description: Default 2.
+
+  - name: text_control
+    description: Free-text filter.
+    arguments:
+      - name: name
+        type: string
+        description: Control label.
+      - name: targets
+        type: list[any]
+        description: "`(element, field)` pairs."
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: control_id
+        type: string
+        description: Sigma `controlId`.
+      - name: mode
+        type: string
+        description: "Sigma text operator - equals, contains (default), starts-with, ..."
+      - name: w
+        type: int
+        description: Default 6.
+      - name: h
+        type: int
+        description: Default 2.
+
+  - name: number_range_control
+    description: Numeric range control.
+    arguments:
+      - name: name
+        type: string
+        description: Control label.
+      - name: targets
+        type: list[any]
+        description: "`(element, field)` pairs."
+      - name: key
+        type: string
+        description: Explicit identity for the element id.
+      - name: control_id
+        type: string
+        description: Sigma `controlId`.
+      - name: minimum
+        type: int
+        description: Lower bound of the slider.
+      - name: maximum
+        type: int
+        description: Upper bound of the slider.
+      - name: w
+        type: int
+        description: Default 6.
+      - name: h
+        type: int
+        description: Default 2.
+
+  # ---------------------------------------------------------------- composites
+  - name: row
+    description: A container whose children share the 24 columns evenly (5 items -> 5,5,5,5,4). Optionally forces a common height.
+    arguments:
+      - name: elements
+        type: list[any]
+        description: Elements to put side by side.
+      - name: key
+        type: string
+        description: Container identity. Required.
+      - name: h
+        type: int
+        description: Common height for the children.
+
+  - name: kpi_row
+    description: A band of KPI tiles filling the page width, 5 rows tall.
+    arguments:
+      - name: kpis
+        type: list[any]
+        description: KPI elements.
+      - name: key
+        type: string
+        description: Container identity. Default `kpis`.
+
+  - name: dashboard_header
+    description: A title, optional subtitle, and optional strip of controls. Returns a list.
+    arguments:
+      - name: title
+        type: string
+        description: Title text.
+      - name: subtitle
+        type: string
+        description: Muted subtitle.
+      - name: controls
+        type: list[any]
+        description: Control elements. Default `[]`.
+
+  # ---------------------------------------------------------------- escape hatches
+  - name: extend
+    description: Deep-merges raw Sigma properties onto an element built by a normal macro. Updates in place and returns the element.
+    arguments:
+      - name: el
+        type: any
+        description: The element.
+      - name: options
+        type: dict[string,any]
+        description: Raw Sigma properties. `id`, `kind` and `_`-prefixed keys are refused.
+
+  - name: raw
+    description: An element of any Sigma kind this package has no macro for. Takes part in layout and id checks like any other element.
+    arguments:
+      - name: kind
+        type: string
+        description: Sigma element kind (button, image, embed, gauge-chart, ...).
+      - name: key
+        type: string
+        description: Element identity. Required.
+      - name: properties
+        type: dict[string,any]
+        description: Sigma's own fields for that kind.
+      - name: w
+        type: int
+        description: Default 6.
+      - name: h
+        type: int
+        description: Default 2.
+
+  # ---------------------------------------------------------------- theme
+  - name: theme
+    description: The fully-resolved theme - package defaults, then the `sigma_workbook_theme` project var, then `override`.
+    arguments:
+      - name: override
+        type: dict[string,any]
+        description: Highest-precedence overrides. Default `{}`.
+
+  - name: color
+    description: Resolves a design token (primary, text, body, muted, hairline, canvas, surface, success, warning, danger) to a hex string. Hex literals pass through; unknown tokens raise.
+    arguments:
+      - name: token
+        type: string
+        description: Token name or hex value.
+      - name: override
+        type: dict[string,any]
+        description: Theme overrides to resolve against. Default `{}`.
+
+  - name: color_ref
+    description: A late-bound color. Emits a marker that `workbook()` resolves against the final theme, so a workbook-level `theme=` recolors elements built earlier. The token is validated immediately.
+    arguments:
+      - name: token
+        type: string
+        description: Token name or hex value.
+
+  # ---------------------------------------------------------------- utilities
+  - name: freeze_id
+    description: Deterministic id from a stable path (md5 prefix). Same path in, same id out, every compile.
+    arguments:
+      - name: path
+        type: string
+        description: Stable identity string.
+      - name: length
+        type: int
+        description: Characters to keep. Default 10 (32 is the full md5, used for data model table ids).
+
+  - name: titleize
+    description: "`snake_case` / `kebab-case` / `lowercase` to `Title Case`; anything already containing an uppercase letter is returned untouched."
+    arguments:
+      - name: value
+        type: string
+        description: The string.

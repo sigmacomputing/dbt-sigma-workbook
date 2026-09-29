@@ -1,0 +1,6 @@
+packages:
+  - local: ../
+  # The companion package: workbooks built here reference tables in the data models it composes.
+  # Pinned to a commit so CI is reproducible.
+  - git: "https://github.com/Matts52/dbt-sigma-data-models.git"
+    revision: a3b9ae68db08d7652cc15828ce5c1699eebc30d6
