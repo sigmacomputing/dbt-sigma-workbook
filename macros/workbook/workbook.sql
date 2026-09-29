@@ -67,23 +67,14 @@
      folder_id   Sigma folder to create the workbook in; defaults to the `sigma_folder_id` project var
      workbook_id an existing workbook to update instead of creating a new one (omitted on first create)
      description free-text description
-     output      'contents' (default) or 'spec'; defaults to the `sigma_workbook_format` project var
 
-   Two output shapes exist because Sigma's API has two generations of the same representation:
-
-     contents  the request body of `POST /v2/workbooks` (`{name, folderId, description, contents}`), where
-               `contents` = `{schemaVersion, kind, pages: [{id, name}], elements: [...], settings, layout}`.
-               Elements are one flat list; the `layout` XML is what puts each on its page.
-     spec      the body of the deprecated `POST /v2/workbooks/spec`, and the shape shown throughout the
-               help-center examples: `{name, schemaVersion, folderId, pages: [{id, name, elements}], ...}`.
+   The result is the request body of `POST /v2/workbooks`: `{name, folderId, description, contents}`,
+   where `contents` = `{schemaVersion, kind, pages: [{id, name}], elements: [...], settings, layout}`.
+   Elements are one flat list; the `layout` XML is what puts each on its page.
 
    Everything is validated here, at parse time: a workbook with an empty page, a duplicate page name
    or two elements that would share an id fails `dbt parse` rather than reaching Sigma. #}
-{% macro workbook(name, pages, theme={}, folder_id=none, workbook_id=none, description=none, output=none) %}
-{% set output = output or var('sigma_workbook_format', 'contents') %}
-{% if output not in ['contents', 'spec'] %}
-  {% do sigma_workbook.fail('workbook', "output must be 'contents' or 'spec', got '" ~ output ~ "'.") %}
-{% endif %}
+{% macro workbook(name, pages, theme={}, folder_id=none, workbook_id=none, description=none) %}
 {% if not pages %}
   {% do sigma_workbook.fail('workbook', "pages must not be empty.") %}
 {% endif %}
@@ -119,31 +110,26 @@
     "name": p['name'],
     "elements": sigma_workbook.resolve_colors(sigma_workbook.strip_private(flat), sigma_workbook.theme(theme)['colors']),
   }) %}
-  {% do layout_pages.append(sigma_workbook.page_layout_xml(p['id'], p['_top_level'], output)) %}
+  {% do layout_pages.append(sigma_workbook.page_layout_xml(p['id'], p['_top_level'])) %}
 {% endfor %}
 {% set settings = sigma_workbook.theme_settings(theme) %}
 {% set layout = '<?xml version="1.0" encoding="utf-8"?>\n' ~ (layout_pages | join('\n')) ~ '\n' %}
 {% set folder = folder_id or var('sigma_folder_id', none) %}
 
-{% if output == 'spec' %}
-  {% set spec = {"name": name, "schemaVersion": 1} %}
-  {% do spec.update({"pages": out_pages, "settings": settings, "layout": layout}) %}
-{% else %}
-  {% set flat_elements = [] %}
-  {% set page_stubs = [] %}
-  {% for p in out_pages %}
-    {% do page_stubs.append({"id": p['id'], "name": p['name']}) %}
-    {% for el in p['elements'] %}{% do flat_elements.append(el) %}{% endfor %}
-  {% endfor %}
-  {% set spec = {"name": name, "contents": {
-    "schemaVersion": 1,
-    "kind": "workbook",
-    "pages": page_stubs,
-    "elements": flat_elements,
-    "settings": settings,
-    "layout": layout,
-  }} %}
-{% endif %}
+{% set flat_elements = [] %}
+{% set page_stubs = [] %}
+{% for p in out_pages %}
+  {% do page_stubs.append({"id": p['id'], "name": p['name']}) %}
+  {% for el in p['elements'] %}{% do flat_elements.append(el) %}{% endfor %}
+{% endfor %}
+{% set spec = {"name": name, "contents": {
+  "schemaVersion": 1,
+  "kind": "workbook",
+  "pages": page_stubs,
+  "elements": flat_elements,
+  "settings": settings,
+  "layout": layout,
+}} %}
 {% if folder %}
   {% do spec.update({"folderId": folder}) %}
 {% endif %}

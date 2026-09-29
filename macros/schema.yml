@@ -7,7 +7,7 @@ macros:
   # ---------------------------------------------------------------- workbook
   - name: workbook
     description: |
-      Top-level assembler. Turns pages into a workbook spec in Sigma's code representation and validates it at parse time (empty workbook/page, duplicate page names, colliding element ids). By default the result is the request body of `POST /v2/workbooks`: `{name, folderId, description, contents: {schemaVersion, kind, pages, elements, settings, layout}}`.
+      Top-level assembler. Turns pages into a workbook spec in Sigma's code representation and validates it at parse time (empty workbook/page, duplicate page names, colliding element ids). The result is the request body of `POST /v2/workbooks`: `{name, folderId, description, contents: {schemaVersion, kind, pages, elements, settings, layout}}`.
     arguments:
       - name: name
         type: string
@@ -27,9 +27,6 @@ macros:
       - name: description
         type: string
         description: Workbook description.
-      - name: output
-        type: string
-        description: "`contents` (default) or `spec` (the deprecated nested `pages[].elements` shape). Defaults to the `sigma_workbook_format` project var."
 
   - name: page
     description: A page of elements. Elements may be passed individually or as lists (composites such as `dashboard_header` return lists); they are placed left to right on Sigma's 24-column grid, wrapping when a row fills.
@@ -254,7 +251,6 @@ macros:
         description: "Sort items - a field, or a `(field, 'asc'|'desc')` pair. Default `[]`."
       - name: description
         type: string
-        description: Description text.
       - name: style
         type: dict[string,any]
         description: Overrides the default card look (see `sigma_workbook_theme.cards`).
@@ -270,10 +266,8 @@ macros:
         description: The measure - a formula or `sigma_workbook.field(...)`.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
         description: Width in grid columns. Default 6 (`kpi_row` resizes).
@@ -306,7 +300,6 @@ macros:
         description: Small line under the value.
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: bar_chart
     description: Bar chart. Sorted by its first measure, descending, unless `sort_by` says otherwise. Single-series charts use the theme's primary color.
@@ -325,19 +318,14 @@ macros:
         description: Field to split series by.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 12.
       - name: h
         type: int
-        description: Default 14.
       - name: description
         type: string
-        description: Description text.
       - name: sort_by
         type: any
         description: "`x`, `y` (default), a field, or none."
@@ -349,16 +337,13 @@ macros:
         description: "`stacked` or `normalized`."
       - name: labels
         type: bool
-        description: Show data labels. Default false.
       - name: legend
         type: bool
-        description: "`false` hides the legend."
       - name: horizontal
         type: bool
         description: Horizontal bars. Default false.
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: line_chart
     description: Line chart. Keeps axis order unless `sort_by` is set.
@@ -377,19 +362,14 @@ macros:
         description: Field to split series by.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 12.
       - name: h
         type: int
-        description: Default 14.
       - name: description
         type: string
-        description: Description text.
       - name: sort_by
         type: any
         description: "`x`, `y`, a field, or none (default)."
@@ -398,13 +378,10 @@ macros:
         description: "`asc` (default) or `desc`."
       - name: labels
         type: bool
-        description: Show data labels. Default false.
       - name: legend
         type: bool
-        description: "`false` hides the legend."
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: area_chart
     description: Area chart; like `line_chart` plus `stacking`.
@@ -423,19 +400,14 @@ macros:
         description: Field to split series by.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 12.
       - name: h
         type: int
-        description: Default 14.
       - name: description
         type: string
-        description: Description text.
       - name: sort_by
         type: any
         description: "`x`, `y`, a field, or none (default)."
@@ -447,13 +419,10 @@ macros:
         description: "`stacked` or `normalized`."
       - name: labels
         type: bool
-        description: Show data labels. Default false.
       - name: legend
         type: bool
-        description: "`false` hides the legend."
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: scatter_chart
     description: Scatter chart. `x` and `y` are both measures; `size` scales the marks.
@@ -475,25 +444,18 @@ macros:
         description: Measure that scales the marks.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 12.
       - name: h
         type: int
-        description: Default 14.
       - name: description
         type: string
-        description: Description text.
       - name: legend
         type: bool
-        description: "`false` hides the legend."
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: pie_chart
     description: Pie chart of a measure by category.
@@ -509,28 +471,21 @@ macros:
         description: Measure.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 8.
       - name: h
         type: int
-        description: Default 14.
       - name: description
         type: string
-        description: Description text.
       - name: labels
         type: bool
         description: Percent labels on slices. Default true.
       - name: legend
         type: bool
-        description: "`false` hides the legend."
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: donut_chart
     description: Donut chart; like `pie_chart` plus an optional measure in the hole.
@@ -549,28 +504,21 @@ macros:
         description: Measure shown in the middle.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 8.
       - name: h
         type: int
-        description: Default 14.
       - name: description
         type: string
-        description: Description text.
       - name: labels
         type: bool
         description: Percent labels on slices. Default true.
       - name: legend
         type: bool
-        description: "`false` hides the legend."
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: pivot_table
     description: Pivot table. Give at least one of `rows` / `cols`.
@@ -589,22 +537,16 @@ macros:
         description: Column grouping field, or a list.
       - name: name
         type: string
-        description: Title.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 24.
       - name: h
         type: int
-        description: Default 14.
       - name: description
         type: string
-        description: Description text.
       - name: style
         type: dict[string,any]
-        description: Overrides the default card look.
 
   - name: text
     description: A markdown text element.
@@ -617,10 +559,8 @@ macros:
         description: Explicit identity for the element id. Defaults to the body.
       - name: w
         type: int
-        description: Default 24.
       - name: h
         type: int
-        description: Default 2.
       - name: align
         type: string
         description: "Vertical alignment - top (default), center, bottom."
@@ -636,13 +576,10 @@ macros:
         description: Muted line underneath.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 24.
       - name: h
         type: int
-        description: Default 3.
 
   - name: heading
     description: Section heading, one step below `title`.
@@ -652,13 +589,10 @@ macros:
         description: Heading text.
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: w
         type: int
-        description: Default 24.
       - name: h
         type: int
-        description: Default 2.
 
   - name: divider
     description: A rule between sections. Give repeated dividers distinct keys.
@@ -671,10 +605,8 @@ macros:
         description: "`horizontal` (default) or `vertical`."
       - name: w
         type: int
-        description: Default 24.
       - name: h
         type: int
-        description: Default 1.
 
   - name: container
     description: Groups elements on their own 24-column grid. Invisible by default; height derived from children unless `h` is set.
@@ -684,13 +616,11 @@ macros:
         description: Child elements. Must not be empty.
       - name: key
         type: string
-        description: Element identity. Required.
       - name: name
         type: string
         description: Optional name.
       - name: w
         type: int
-        description: Default 24.
       - name: h
         type: int
         description: Height in rows; derived when omitted.
@@ -713,7 +643,6 @@ macros:
         description: "`(element, field)` pairs."
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: control_id
         type: string
         description: "Sigma `controlId` used in formulas. Default: lowercase dash-separated `name`."
@@ -725,10 +654,8 @@ macros:
         description: Pre-selected values.
       - name: w
         type: int
-        description: Default 6.
       - name: h
         type: int
-        description: Default 2.
 
   - name: date_range_control
     description: Date range control (between two dates).
@@ -741,16 +668,13 @@ macros:
         description: "`(element, field)` pairs."
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: control_id
         type: string
         description: Sigma `controlId`.
       - name: w
         type: int
-        description: Default 6.
       - name: h
         type: int
-        description: Default 2.
 
   - name: text_control
     description: Free-text filter.
@@ -763,7 +687,6 @@ macros:
         description: "`(element, field)` pairs."
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: control_id
         type: string
         description: Sigma `controlId`.
@@ -772,10 +695,8 @@ macros:
         description: "Sigma text operator - equals, contains (default), starts-with, ..."
       - name: w
         type: int
-        description: Default 6.
       - name: h
         type: int
-        description: Default 2.
 
   - name: number_range_control
     description: Numeric range control.
@@ -788,7 +709,6 @@ macros:
         description: "`(element, field)` pairs."
       - name: key
         type: string
-        description: Explicit identity for the element id.
       - name: control_id
         type: string
         description: Sigma `controlId`.
@@ -800,10 +720,8 @@ macros:
         description: Upper bound of the slider.
       - name: w
         type: int
-        description: Default 6.
       - name: h
         type: int
-        description: Default 2.
 
   # ---------------------------------------------------------------- composites
   - name: row
@@ -861,16 +779,13 @@ macros:
         description: Sigma element kind (button, image, embed, gauge-chart, ...).
       - name: key
         type: string
-        description: Element identity. Required.
       - name: properties
         type: dict[string,any]
         description: Sigma's own fields for that kind.
       - name: w
         type: int
-        description: Default 6.
       - name: h
         type: int
-        description: Default 2.
 
   # ---------------------------------------------------------------- theme
   - name: theme

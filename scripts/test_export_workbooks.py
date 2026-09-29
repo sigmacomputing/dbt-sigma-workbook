@@ -142,15 +142,6 @@ class PushFlow(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.client.push(dict(CONTENTS_SPEC, workbookId="wb-7"), dry_run=True)
 
-    def test_legacy_nested_spec_uses_the_spec_endpoints(self):
-        legacy = {"name": "L", "schemaVersion": 1, "folderId": "f", "pages": [{"id": "p", "name": "P", "elements": []}]}
-        self.client.push(legacy)
-        self.assertEqual(FakeSigma.calls[-1]["path"], "/v2/workbooks/spec")
-        self.client.push(legacy, dry_run=True)
-        self.assertEqual(FakeSigma.calls[-1]["path"], "/v2/workbooks/spec/verify")
-        self.client.push(dict(legacy, workbookId="wb-2"))
-        self.assertEqual((FakeSigma.calls[-1]["method"], FakeSigma.calls[-1]["path"]), ("PUT", "/v2/workbooks/wb-2/spec"))
-
     def test_http_errors_surface_the_response_body(self):
         client = ex.SigmaClient(f"http://127.0.0.1:{self.server.server_port}", "id", "secret")
         with self.assertRaises(RuntimeError) as ctx:
