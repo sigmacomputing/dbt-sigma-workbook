@@ -182,7 +182,7 @@
     {% do discovered.append(node.name) %}
   {% endif %}
 {% endfor %}
-{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model'] %}
+{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model', 'simple_leaderboard'] %}
   {% do sigma_workbook_integration_tests._ok(required in discovered, 'workbook model ' ~ required ~ ' was discovered in the graph (found ' ~ discovered ~ ')') %}
 {% endfor %}
 {% for model_name in discovered %}
@@ -233,6 +233,34 @@
 {% set breakdown_xml = dc.layout.split('</Page>')[1] %}
 {% set donut = sigma_workbook_integration_tests._find(dc.elements, 'donut-chart', none) %}
 {% do sigma_workbook_integration_tests._ok(donut.id in breakdown_xml and line.id not in breakdown_xml, 'layout puts each element on the right page') %}
+
+{# ---- simple_dashboard sizing: kpi_h / chart_h give a scorecard-style page (big tiles, no table) ---- #}
+{% set tall_kpis = [{'value': 'Count()', 'name': 'Count', 'timeline': 'order_date', 'trend': true}] %}
+{% set tall_charts = [{'type': 'bar', 'x': 'region', 'y': 'Count()', 'name': 'By region'}] %}
+{% set orders_src = sigma_workbook.from_ref('stg_orders') %}
+{% set default_size = sigma_workbook.simple_dashboard('Sized', orders_src, kpis=tall_kpis, charts=tall_charts) %}
+{% set tall = sigma_workbook.simple_dashboard('Sized', orders_src, kpis=tall_kpis, charts=tall_charts, kpi_h=7, chart_h=12) %}
+{% do sigma_workbook_integration_tests._ok('gridRow="1 / 6"' in default_size.contents.layout and 'gridRow="1 / 15"' in default_size.contents.layout, 'by default KPI tiles are 5 rows and charts 14 rows tall') %}
+{% do sigma_workbook_integration_tests._ok('gridRow="1 / 8"' in tall.contents.layout and 'gridRow="1 / 13"' in tall.contents.layout, 'kpi_h=7 and chart_h=12 reach the layout') %}
+{% do sigma_workbook_integration_tests._ok('gridRow="1 / 6"' not in tall.contents.layout and 'gridRow="1 / 15"' not in tall.contents.layout, 'the default sizes are fully replaced, not added to') %}
+{% set tall_kinds = tall.contents.elements | map(attribute='kind') | list %}
+{% do sigma_workbook_integration_tests._ok('table' not in tall_kinds, 'no table_columns, no detail table') %}
+{% do sigma_workbook_integration_tests._ok(sigma_workbook_integration_tests._find(tall.contents.elements, 'kpi-chart', 'Count').trend.shape == 'area', 'trend: true on a KPI with a timeline shows a sparkline') %}
+
+{# ---- leaderboard: one ranked horizontal bar chart per dimension, plus a breakdown pivot ---- #}
+{% set lb = sigma_workbook_integration_tests._spec_of('simple_leaderboard').contents %}
+{% for title in ['Total by Region', 'Total by Segment'] %}
+  {% set lb_bar = sigma_workbook_integration_tests._find(lb.elements, 'bar-chart', title) %}
+  {% do sigma_workbook_integration_tests._ok(lb_bar.orientation == 'horizontal' and lb_bar.dataLabel.labels == 'shown' and lb_bar.xAxis.sort.direction == 'descending', title ~ ' is a horizontal bar chart ranked largest first, with labels') %}
+{% endfor %}
+{% set lb_pivot = sigma_workbook_integration_tests._find(lb.elements, 'pivot-table', 'Region breakdown') %}
+{% do sigma_workbook_integration_tests._ok(lb_pivot['values'] | length == 3 and lb_pivot.rowsBy | length == 1, 'the breakdown pivot has the ranking measure plus two detail measures, by the first dimension') %}
+{% set lb_control = lb.elements | selectattr('kind', 'equalto', 'control') | first %}
+{% do sigma_workbook_integration_tests._ok(lb_control.filters | length == 4, 'the leaderboard filter is wired to the KPI, both charts and the pivot') %}
+
+{# ---- generic: nothing in the leaderboard knows about the sample orders table ---- #}
+{% set standings = sigma_workbook.simple_leaderboard('Team standings', sigma_workbook.from_ref('stg_orders'), dimensions=['team_name'], measure='Sum([Points])', measure_name='Points') %}
+{% do sigma_workbook_integration_tests._find(standings.contents.elements, 'bar-chart', 'Points by Team Name') %}
 
 {# ---- theme: project var + per-workbook override + Sigma-blue default ---- #}
 {% do sigma_workbook_integration_tests._ok(dc.settings.theme.overrides.colors.highlight == '#1A70F1', 'default primary is Sigma blue') %}

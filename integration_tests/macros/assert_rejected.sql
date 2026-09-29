@@ -130,6 +130,10 @@
 {% do sigma_workbook.workbook('W', [sigma_workbook.page('P', [sigma_workbook.text('hi', key='t')])], output='xml') %}
 {% endmacro %}
 
+{% macro assert_leaderboard_without_dimensions_rejected() %}
+{% do sigma_workbook.simple_leaderboard('L', sigma_workbook_integration_tests._src(), dimensions=[], measure='Count()') %}
+{% endmacro %}
+
 {% macro assert_malformed_field_rejected() %}
 {% do sigma_workbook.table(sigma_workbook_integration_tests._src(), [{'name': 'no formula'}], name='T') %}
 {% endmacro %}

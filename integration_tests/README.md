@@ -1,6 +1,6 @@
 # Integration tests
 
-A runnable example project: one seed (`orders`), a staging model, one Sigma data model (composed with the companion [`sigma_data_models`](https://github.com/Matts52/dbt-sigma-data-models) package), and three workbook models that exercise the library three ways. It doubles as a set of copy-pasteable examples.
+A runnable example project: one seed (`orders`), a staging model, one Sigma data model (composed with the companion [`sigma_data_models`](https://github.com/Matts52/dbt-sigma-data-models) package), and four workbook models that exercise the library in different ways. It doubles as a set of copy-pasteable examples.
 
 ## Run
 
@@ -25,6 +25,7 @@ dbt run-operation assert_workbooks      # structural assertions
 | --- | --- |
 | `sigma_sales_dashboard` | Everything built from primitives: two pages, KPIs with comparison / timeline / sparkline, bar (with `extend`), line, donut, pivot, a chart built on a table element, a table with a calculated column, list and date controls wired to several elements, containers and rows, a `raw` button, a divider, text. |
 | `sigma_sales_simple` | The same idea in one call: `simple_dashboard`. |
+| `simple_leaderboard` | `simple_leaderboard`: two dimensions ranked by one measure, plus a breakdown pivot. |
 | `sigma_sales_from_data_model` | A workbook that reads the `orders` table of `sigma_sales_model`, with a per-workbook theme override. |
 | `sigma_sales_model` | A Sigma data model (via `sigma_data_models`), so the interop can be checked against the real package. |
 
@@ -48,7 +49,7 @@ dbt run-operation assert_workbooks      # structural assertions
    git diff integration_tests/expected
    ```
 5. **Schema conformance**: `scripts/validate_against_sigma_schema.py` validates each spec against `integration_tests/schema/create_workbook_request.schema.json.gz`, the request body of `POST /v2/workbooks` extracted from [Sigma's public OpenAPI](https://assets.sigmacomputing.com/openapi/public-rest-api/sigma-computing-public-rest-api.json). Without `jsonschema` installed this step is skipped locally; CI sets `REQUIRE_JSONSCHEMA=1`, so there it fails instead.
-6. **Rejection** (`macros/assert_rejected.sql`): 29 invalid inputs (empty workbook/page, duplicate page names or element ids, unknown color tokens, bad sort directions, a table with no columns, a pivot with no axes, an over-wide element, malformed sources and fields, unsupported formats or output format, controls without or with foreign targets, unknown chart/filter types, a control id that collides with a column, misuse of `extend` / `raw`, a missing connection id). Each is listed in `negative_cases.txt` with the text its error must contain. The script fails if the macro succeeds, **or** fails with any other message (a typo in the test, an unrelated error), **or** if a macro in `assert_rejected.sql` has no entry in `negative_cases.txt` (or the reverse), so no case can go unrun. To add one: write the `assert_*_rejected` macro, run it, and put its message in `negative_cases.txt`.
+6. **Rejection** (`macros/assert_rejected.sql`): 30 invalid inputs (empty workbook/page, duplicate page names or element ids, unknown color tokens, bad sort directions, a table with no columns, a pivot with no axes, an over-wide element, malformed sources and fields, unsupported formats or output format, controls without or with foreign targets, unknown chart/filter types, a control id that collides with a column, misuse of `extend` / `raw`, a missing connection id, a leaderboard with no dimensions). Each is listed in `negative_cases.txt` with the text its error must contain. The script fails if the macro succeeds, **or** fails with any other message (a typo in the test, an unrelated error), **or** if a macro in `assert_rejected.sql` has no entry in `negative_cases.txt` (or the reverse), so no case can go unrun. To add one: write the `assert_*_rejected` macro, run it, and put its message in `negative_cases.txt`.
 
 Separately, `python -m unittest discover -s scripts -p "test_*.py"` runs the script tests:
 

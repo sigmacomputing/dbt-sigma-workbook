@@ -84,6 +84,12 @@ macros:
       - name: table_name
         type: string
         description: Title of the detail table. Default `Detail`.
+      - name: kpi_h
+        type: int
+        description: Height of the KPI tiles in rows. Default 5; raise it for a scorecard-style page.
+      - name: chart_h
+        type: int
+        description: Common height for the charts in each row. Default is each chart's own height.
 
   # ---------------------------------------------------------------- sources
   - name: from_ref
@@ -841,6 +847,83 @@ macros:
       - name: controls
         type: list[any]
         description: Control elements. Default `[]`.
+
+  - name: dashboard_page
+    description: "One page laid out as title -> filters -> KPI band -> chart rows -> extra elements -> detail table, from data alone. The body of `simple_dashboard` and the building block for `executive_scorecard`, `simple_leaderboard` and `report`. Returns a page for `workbook()`."
+    arguments:
+      - name: name
+        type: string
+        description: Page name (also the title).
+      - name: source
+        type: any
+        description: A sigma_workbook source.
+      - name: kpis
+        type: list[any]
+        description: "List of `{value, name, format, compare_to, timeline, period, trend, direction, key}` mappings. Default `[]`."
+      - name: charts
+        type: list[any]
+        description: "List of chart mappings (see `simple_dashboard`; bar charts also take `horizontal` and `labels`). Default `[]`."
+      - name: filters
+        type: list[any]
+        description: "List of `{type, name, column}` mappings, wired to every element on the page. Default `[]`."
+      - name: table_columns
+        type: list[any]
+        description: Fields for the detail table. Omit for no table.
+      - name: subtitle
+        type: string
+        description: Muted line under the title.
+      - name: table_name
+        type: string
+        description: Title of the detail table. Default `Detail`.
+      - name: extras
+        type: list[any]
+        description: Elements you built yourself (a pivot table, a `raw` element), each on its own row after the charts, and filtered like the rest. Default `[]`.
+      - name: kpi_h
+        type: int
+        description: Height of the KPI band in rows. Default 5.
+      - name: chart_h
+        type: int
+        description: Common height for chart rows. Default is each chart's own height.
+      - name: charts_per_row
+        type: int
+        description: How many charts share a row. Default 2.
+      - name: where
+        type: string
+        description: Names the caller in error messages. Default `dashboard_page`.
+
+  - name: simple_leaderboard
+    description: "A ranking dashboard: title -> filters -> KPI band -> one horizontal bar chart per dimension, ranked by `measure` with data labels -> an optional breakdown pivot table."
+    arguments:
+      - name: name
+        type: string
+        description: Workbook and page name.
+      - name: source
+        type: any
+        description: A sigma_workbook source.
+      - name: dimensions
+        type: list[any]
+        description: Fields to rank (a region, a rep, a product). One chart each. Must not be empty.
+      - name: measure
+        type: any
+        description: The field to rank by, e.g. `Sum([Amount])`.
+      - name: measure_name
+        type: string
+        description: Label used in chart titles. Defaults to the measure's name or formula.
+      - name: kpis
+        type: list[any]
+        description: "KPI mappings, as in `simple_dashboard`. Default `[]`."
+      - name: detail_measures
+        type: list[any]
+        description: Extra measures; if given, a pivot table breaks the first dimension down by `measure` and these. Default `[]`.
+      - name: filters
+        type: list[any]
+        description: "List of `{type, name, column}` mappings. Default `[]`."
+      - name: subtitle
+        type: string
+        description: Muted line under the title.
+      - name: theme
+        type: dict[string,any]
+        description: Per-workbook theme overrides. Default `{}`.
 
   # ---------------------------------------------------------------- escape hatches
   - name: extend

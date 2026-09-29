@@ -1,0 +1,347 @@
+{
+  "name": "Leaderboard",
+  "contents": {
+    "schemaVersion": 1,
+    "kind": "workbook",
+    "pages": [
+      {
+        "id": "a0cf10bfa8",
+        "name": "Leaderboard"
+      }
+    ],
+    "elements": [
+      {
+        "id": "7fbba94282",
+        "kind": "text",
+        "body": "# Leaderboard",
+        "verticalAlign": "center"
+      },
+      {
+        "id": "b08f1de6ca",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "b8aa6c3578",
+        "kind": "control",
+        "controlType": "list",
+        "controlId": "segment-control",
+        "name": "Segment",
+        "filters": [
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "83d82f476a"
+            },
+            "columnId": "3ee498d27e"
+          },
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "6c831d6c8f"
+            },
+            "columnId": "1d579b1be1"
+          },
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "c9041033db"
+            },
+            "columnId": "f89b1bfb96"
+          },
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "3a18b5f327"
+            },
+            "columnId": "8d1e052d67"
+          }
+        ],
+        "mode": "include",
+        "selectionMode": "multiple",
+        "source": {
+          "kind": "source",
+          "source": {
+            "kind": "table",
+            "elementId": "83d82f476a"
+          },
+          "columnId": "3ee498d27e"
+        }
+      },
+      {
+        "id": "c675feb435",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "83d82f476a",
+        "kind": "kpi-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "1ace0c1cf3",
+            "formula": "Sum([Amount])",
+            "format": {
+              "kind": "number",
+              "formatString": "$.0f",
+              "decimalSymbol": ".",
+              "digitGroupingSymbol": ",",
+              "digitGroupingSize": [
+                3
+              ],
+              "currencySymbol": "$"
+            }
+          },
+          {
+            "id": "39476ca9df",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "3ee498d27e",
+            "formula": "[stg_orders/Segment]"
+          }
+        ],
+        "value": {
+          "columnId": "1ace0c1cf3",
+          "color": "#0a0a0a",
+          "fontWeight": "bold"
+        },
+        "name": {
+          "text": "Total",
+          "color": "#737373",
+          "fontWeight": "normal",
+          "fontSize": 14
+        },
+        "layout": {
+          "anchor": "left",
+          "verticalAnchor": "top"
+        },
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "adf8b21b54",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "6c831d6c8f",
+        "kind": "bar-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "8ccd78f09b",
+            "formula": "[stg_orders/Region]"
+          },
+          {
+            "id": "f556e25a33",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "037fef7900",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "1d579b1be1",
+            "formula": "[stg_orders/Segment]"
+          }
+        ],
+        "xAxis": {
+          "columnId": "8ccd78f09b",
+          "sort": {
+            "by": "f556e25a33",
+            "direction": "descending"
+          }
+        },
+        "yAxis": {
+          "columnIds": [
+            "f556e25a33"
+          ]
+        },
+        "color": {
+          "by": "single",
+          "value": "#1A70F1"
+        },
+        "orientation": "horizontal",
+        "dataLabel": {
+          "labels": "shown"
+        },
+        "name": "Total by Region",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "c9041033db",
+        "kind": "bar-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "650059634d",
+            "formula": "[stg_orders/Segment]"
+          },
+          {
+            "id": "6efd9f42fd",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "8719a9ef26",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "f89b1bfb96",
+            "formula": "[stg_orders/Segment]"
+          }
+        ],
+        "xAxis": {
+          "columnId": "650059634d",
+          "sort": {
+            "by": "6efd9f42fd",
+            "direction": "descending"
+          }
+        },
+        "yAxis": {
+          "columnIds": [
+            "6efd9f42fd"
+          ]
+        },
+        "color": {
+          "by": "single",
+          "value": "#1A70F1"
+        },
+        "orientation": "horizontal",
+        "dataLabel": {
+          "labels": "shown"
+        },
+        "name": "Total by Segment",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "3a18b5f327",
+        "kind": "pivot-table",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "3a7489fc37",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "96684a9c5d",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "e88311392b",
+            "formula": "Count()"
+          },
+          {
+            "id": "f30007ab15",
+            "formula": "Avg([Amount])"
+          },
+          {
+            "id": "7e8410e9bf",
+            "formula": "[stg_orders/Region]"
+          },
+          {
+            "id": "8d1e052d67",
+            "formula": "[stg_orders/Segment]"
+          }
+        ],
+        "values": [
+          "3a7489fc37",
+          "e88311392b",
+          "f30007ab15"
+        ],
+        "rowsBy": [
+          {
+            "columnId": "7e8410e9bf"
+          }
+        ],
+        "name": "Region breakdown",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      }
+    ],
+    "settings": {
+      "theme": {
+        "name": "Light",
+        "overrides": {
+          "colors": {
+            "text": "#0a0a0a",
+            "highlight": "#1A70F1",
+            "surface": "#ffffff",
+            "success": "#008236",
+            "warning": "#bb4d00",
+            "danger": "#c10007"
+          },
+          "categoricalScheme": "superbloom",
+          "colorOverrides": [
+            {
+              "name": "backgroundCanvas",
+              "color": "#fafafa"
+            }
+          ],
+          "pageWidth": "large"
+        }
+      }
+    },
+    "layout": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Page type=\"grid\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\" id=\"a0cf10bfa8\">\n  <Element elementId=\"7fbba94282\" gridColumn=\"1 / 25\" gridRow=\"1 / 4\"/>\n  <Container elementId=\"b08f1de6ca\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"4 / 6\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"b8aa6c3578\" gridColumn=\"1 / 7\" gridRow=\"1 / 3\"/>\n  </Container>\n  <Container elementId=\"c675feb435\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"6 / 11\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"83d82f476a\" gridColumn=\"1 / 25\" gridRow=\"1 / 6\"/>\n  </Container>\n  <Container elementId=\"adf8b21b54\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"11 / 25\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"6c831d6c8f\" gridColumn=\"1 / 13\" gridRow=\"1 / 15\"/>\n    <Element elementId=\"c9041033db\" gridColumn=\"13 / 25\" gridRow=\"1 / 15\"/>\n  </Container>\n  <Element elementId=\"3a18b5f327\" gridColumn=\"1 / 25\" gridRow=\"25 / 39\"/>\n</Page>\n"
+  },
+  "folderId": "e7c79c61-94d4-458e-ab4c-f581a4c04a4c"
+}
