@@ -15,7 +15,10 @@ flags:
   validate_macro_args: true
 
 vars:
-  sigma_connection_id: 17edf046-9636-4d9b-a13f-d034bec2d600
+  # The Sigma connection the workbooks read from. Nothing is hardcoded in the tests: they compare
+  # against this var, and the golden files hold a placeholder. Supply a real id with SIGMA_CONNECTION_ID
+  # (e.g. before `export_workbooks.py --push --dry-run`); the default is a placeholder, not a real id.
+  sigma_connection_id: "{{ env_var('SIGMA_CONNECTION_ID', '00000000-0000-0000-0000-000000000000') }}"
   sigma_folder_id: e7c79c61-94d4-458e-ab4c-f581a4c04a4c
   # Recorded after the data model was first created in Sigma (see README -> "Data models").
   sigma_data_model_ids:

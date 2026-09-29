@@ -31,6 +31,8 @@ dbt run-operation assert_workbooks      # structural assertions
 
 `dbt_project.yml` sets the project vars (`sigma_connection_id`, `sigma_folder_id`, `sigma_data_model_ids`, `sigma_workbook_theme`) and `flags: validate_macro_args: true`, which makes dbt check `macros/schema.yml` against the real macro signatures (CI adds `--warn-error` on dbt 1.x).
 
+**The connection id is not hardcoded anywhere in the tests.** `sigma_connection_id` reads the `SIGMA_CONNECTION_ID` environment variable and otherwise defaults to an all-zeros placeholder. The assertions compare every warehouse source with `var('sigma_connection_id')`, the last step of the script re-runs them under a `--vars` override, and the golden files store `<connectionId>` instead of a value, so the suite passes whatever id you supply.
+
 ## What the suite checks
 
 1. **Builds and parses** on DuckDB with no warehouse connection (`dbt parse` alone produces the specs).
@@ -59,7 +61,7 @@ Separately, `python -m unittest discover -s scripts -p "test_*.py"` runs the scr
 
 ## What it does not check
 
-Nothing here talks to Sigma: CI has no credentials. The schema check catches missing required fields, wrong types and enum values, and unknown element kinds, but not unknown extra properties or invalid formulas. Sigma's own validator does; run `python scripts/export_workbooks.py --push --dry-run` against your organization to use it (it creates nothing). That is how the layout-tag, column-channel and control-id problems recorded in [`docs/design.md`](../docs/design.md) were found.
+Nothing here talks to Sigma: CI has no credentials. The schema check catches missing required fields, wrong types and enum values, and unknown element kinds, but not unknown extra properties or invalid formulas. Sigma's own validator does; run `SIGMA_CONNECTION_ID=<your connection id> dbt parse` and then `python scripts/export_workbooks.py --push --dry-run` against your organization to use it (it creates nothing). That is how the layout-tag, column-channel and control-id problems recorded in [`docs/design.md`](../docs/design.md) were found.
 
 ## Refreshing the schema
 

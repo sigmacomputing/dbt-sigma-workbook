@@ -118,6 +118,7 @@
       {% do sigma_workbook_integration_tests._ok(el.source.elementId in element_ids, where ~ 'source.elementId of ' ~ el.id ~ ' exists') %}
     {% elif el.source.kind == 'warehouse-table' %}
       {% do sigma_workbook_integration_tests._ok(el.source.connectionId and el.source.path | length == 3, where ~ 'warehouse source of ' ~ el.id ~ ' has connectionId and a 3-part path') %}
+      {% do sigma_workbook_integration_tests._ok(el.source.connectionId == var('sigma_connection_id'), where ~ 'warehouse source of ' ~ el.id ~ ' carries the sigma_connection_id project var, not a hardcoded id') %}
     {% elif el.source.kind == 'data-model' %}
       {% do sigma_workbook_integration_tests._ok(el.source.dataModelId and el.source.elementId, where ~ 'data-model source of ' ~ el.id ~ ' has ids') %}
     {% endif %}

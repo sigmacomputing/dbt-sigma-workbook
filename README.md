@@ -57,7 +57,7 @@ Set project variables in `dbt_project.yml`:
 
 ```yaml
 vars:
-  sigma_connection_id: "17edf046-9636-4d9b-a13f-d034bec2d600"   # Sigma connection to your warehouse
+  sigma_connection_id: "<your-sigma-connection-id>"              # Sigma connection to your warehouse
   sigma_folder_id: "e7c79c61-94d4-458e-ab4c-f581a4c04a4c"        # folder new workbooks are created in
 ```
 

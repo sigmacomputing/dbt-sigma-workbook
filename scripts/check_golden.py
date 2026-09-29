@@ -11,22 +11,41 @@ a diff of `integration_tests/expected/*.json`, instead of relying on someone hav
 Comparison is on parsed JSON, so key order and whitespace don't matter; the diff shown is on the
 key-sorted, indented form. Missing and unexpected files are failures too, so adding or removing a
 workbook model can't go unnoticed.
+
+Environment-specific ids are not part of the snapshot. Every `connectionId` is replaced with a
+placeholder on both sides (and golden files are written that way), so the connection id comes from the
+`sigma_connection_id` project var and never lives in the repo. `assert_workbooks` separately checks
+that each warehouse source carries exactly that var.
 """
 from __future__ import annotations
 
 import argparse
 import difflib
 import json
-import shutil
 import sys
 from pathlib import Path
 
 DEFAULT_EXPECTED = Path(__file__).resolve().parent.parent / "integration_tests" / "expected"
 MAX_DIFF_LINES = 60
+# JSON keys whose string values depend on the environment, and what stands in for them.
+PLACEHOLDERS = {"connectionId": "<connectionId>"}
+
+
+def normalize(value):
+    """A copy of parsed JSON with the environment-specific values replaced by placeholders."""
+    if isinstance(value, dict):
+        return {k: PLACEHOLDERS[k] if k in PLACEHOLDERS and isinstance(v, str) else normalize(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [normalize(item) for item in value]
+    return value
+
+
+def _load(path: Path):
+    return normalize(json.loads(path.read_text()))
 
 
 def _pretty(path: Path) -> list[str]:
-    return json.dumps(json.loads(path.read_text()), indent=2, sort_keys=True).splitlines()
+    return json.dumps(_load(path), indent=2, sort_keys=True).splitlines()
 
 
 def compare(actual_dir: Path, expected_dir: Path) -> list[str]:
@@ -39,7 +58,7 @@ def compare(actual_dir: Path, expected_dir: Path) -> list[str]:
     for name in sorted(expected.keys() - actual.keys()):
         problems.append(f"{name}: golden file exists but the workbook was not compiled (run with --update to drop it)")
     for name in sorted(actual.keys() & expected.keys()):
-        if json.loads(actual[name].read_text()) == json.loads(expected[name].read_text()):
+        if _load(actual[name]) == _load(expected[name]):
             continue
         diff = list(difflib.unified_diff(_pretty(expected[name]), _pretty(actual[name]), "expected/" + name, "actual/" + name, lineterm="", n=2))
         shown = diff[:MAX_DIFF_LINES]
@@ -55,7 +74,7 @@ def update(actual_dir: Path, expected_dir: Path) -> list[str]:
         stale.unlink()
     written = []
     for path in sorted(actual_dir.glob("*.json")):
-        shutil.copyfile(path, expected_dir / path.name)
+        (expected_dir / path.name).write_text(json.dumps(_load(path), indent=2) + "\n")
         written.append(path.name)
     return written
 

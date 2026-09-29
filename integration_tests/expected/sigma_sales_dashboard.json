@@ -112,7 +112,7 @@
         "kind": "kpi-chart",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
@@ -189,7 +189,7 @@
         "kind": "kpi-chart",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
@@ -263,7 +263,7 @@
         "kind": "kpi-chart",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
@@ -325,7 +325,7 @@
         "kind": "bar-chart",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
@@ -388,7 +388,7 @@
         "kind": "line-chart",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
@@ -490,7 +490,7 @@
         "kind": "donut-chart",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
@@ -541,7 +541,7 @@
         "kind": "pivot-table",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
@@ -637,7 +637,7 @@
         "kind": "table",
         "source": {
           "kind": "warehouse-table",
-          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "connectionId": "<connectionId>",
           "path": [
             "integration_tests",
             "main",
