@@ -49,19 +49,10 @@
 {% endmacro %}
 
 
-{# How `column` (a name exactly as Sigma shows it) is referred to from a column list, given the source
-   the element reads from. `columns_by_label` is used only for element sources. #}
+{# How `column` (a name exactly as Sigma shows it) is referred to from a column list: qualified with
+   the name of what it is read from - the warehouse table, the data model table, or the parent element
+   (`[Trips/Minutes]` for a calculated column called Minutes on a table element called Trips). #}
 {% macro reference_to(column, source) %}
-{% if source.get('kind') == 'table' %}
-  {% for parent_column in source.get('_columns', []) %}
-    {% if sigma_workbook.column_label(parent_column) == column %}
-      {% if sigma_workbook.is_qualified_reference(parent_column['formula']) %}
-        {% do return(parent_column['formula']) %}
-      {% endif %}
-      {% do return('[' ~ column ~ ']') %}
-    {% endif %}
-  {% endfor %}
-{% endif %}
 {% if source.get('_name') %}
   {% do return('[' ~ source['_name'] ~ '/' ~ column ~ ']') %}
 {% endif %}
@@ -126,6 +117,7 @@
     {% do columns.append({
       "id": sigma_workbook.freeze_id(element_id ~ ':column:' ~ passthrough ~ '|'),
       "formula": passthrough,
+      "hidden": true,
     }) %}
   {% endif %}
 {% endfor %}
@@ -142,8 +134,13 @@
    `role` names the channel the column feeds (x, y, color, comparison, ...). Sigma allows a column on
    only one channel of an element ("referenced from both 'value' and 'comparison'"), so the role is
    part of the id: the same formula on two channels becomes two columns, as it does in Sigma's own
-   exports. Columns in the same role - or with no role, as in a table - are shared. #}
-{% macro add_column(columns, element_id, f, source, where, role='') %}
+   exports. Columns in the same role - or with no role, as in a table - are shared.
+
+   `hidden` marks a column the element needs but should not display (a filter column, a passthrough
+   behind a formula). Sigma shows every column of a table that is not hidden, and two visible columns
+   with the same name make `[Parent/Column]` references from child elements ambiguous - so callers
+   reuse an existing column rather than adding a twin. #}
+{% macro add_column(columns, element_id, f, source, where, role='', hidden=false) %}
 {% set f = sigma_workbook.normalize_field(f, source, where) %}
 {% set column_id = sigma_workbook.freeze_id(element_id ~ ':column:' ~ f['formula'] ~ '|' ~ (f.get('name') or '') ~ ('|' ~ role if role else '')) %}
 {% for existing in columns %}
@@ -157,6 +154,7 @@
   "name": f.get('name'),
   "description": f.get('description'),
   "format": f.get('format'),
+  "hidden": true if hidden else none,
 })) %}
 {% do sigma_workbook.ensure_references(columns, element_id, f['formula'], source) %}
 {% do return(column_id) %}

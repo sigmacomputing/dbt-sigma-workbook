@@ -92,13 +92,14 @@
 {% if el is not mapping or 'id' not in el %}
   {% do sigma_workbook.fail('element', "expected an element built by a sigma_workbook macro (a dict with an `id`), got " ~ el) %}
 {% endif %}
-{# `_name` and `_columns` (the parent's live column list) let a child element refer to the parent's
-   columns the way Sigma does - see field.sql. #}
+{# `_name` is what Sigma calls the parent in `[Parent/Column]` references: the element's own `name`
+   when it has one, otherwise the name of the table it reads (an unnamed table element is titled after
+   its source table). See field.sql. #}
+{% set parent_name = el.get('name') if el.get('name') is string else (el.get('_source') or {}).get('_name') %}
 {% do return({
   "kind": "table",
   "elementId": el['id'],
-  "_name": (el.get('_source') or {}).get('_name'),
-  "_columns": el.get('columns', []),
+  "_name": parent_name,
 }) %}
 {% endmacro %}
 

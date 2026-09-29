@@ -31,6 +31,14 @@ The first version was built from the help-center examples. Running its output th
 | `Circular dependency detected` on a control | A control called "Duration" has `controlId` `duration`, the same name a formula uses for the column `[Duration]`. | Default `controlId` is `<name>-control`; `workbook()` rejects a collision. |
 | (not an error) `Sum([NoSuchColumn])` validates | Sigma's dry run does not resolve unqualified references. | Follow Sigma's export convention: an unqualified reference always comes with its qualified passthrough column. |
 
+Creating the workbook and opening it found two more, which the dry run cannot see (it does not run queries):
+
+| Finding | Cause | Fix |
+| --- | --- | --- |
+| A child bar chart drew one bar; the KPI showed `Unknown column "[Minutes]"`. | Controls had added a second, identically named column to the parent table, so `[Table/Column]` from the child was ambiguous (Sigma's SQL collapsed the axis to `equal_null(min, max)`). And a child reaches a parent's *calculated* column as `[Parent/Column]`, not bare. | Child references are qualified with the parent element's name. Filter columns reuse an existing column instead of adding a twin, and columns added only to serve formulas or filters are `hidden`. |
+
+The element-query endpoint (`workbooks elements query get`) returns the SQL Sigma generates for an element and is the fastest way to see why a chart is wrong.
+
 It also confirmed things that had been assumptions: the `[Table/Column]` prefix rule for warehouse and data model sources (tested against a real data model), child elements, every modeled chart type, controls, pivots, and per-workbook themes are all accepted.
 
 ## Is it as composable and abstracted as it can be?

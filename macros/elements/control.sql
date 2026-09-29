@@ -25,7 +25,7 @@
   {% if target_el is not mapping or '_source' not in target_el %}
     {% do sigma_workbook.fail(where, "each target must be (element, field) with an element built by a sigma_workbook data macro, got " ~ target) %}
   {% endif %}
-  {% set column_id = sigma_workbook.add_column(target_el['columns'], target_el['id'], target[1], target_el['_source'], where, 'filter') %}
+  {% set column_id = sigma_workbook.add_column(target_el['columns'], target_el['id'], target[1], target_el['_source'], where, '' if target_el['kind'] == 'table' else 'filter', true) %}
   {% do filters.append({"source": {"kind": "table", "elementId": target_el['id']}, "columnId": column_id}) %}
   {% if not first %}
     {% do first.update({"element": target_el['id'], "column": column_id}) %}

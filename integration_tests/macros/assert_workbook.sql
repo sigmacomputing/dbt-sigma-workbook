@@ -214,8 +214,17 @@
 {% set parent = sigma_workbook_integration_tests._find(dc.elements, 'table', 'Orders') %}
 {% do sigma_workbook_integration_tests._ok(child.source.kind == 'table' and child.source.elementId == parent.id, 'a chart built on a table element sources from it') %}
 {% set child_formulas = child.columns | map(attribute='formula') | list %}
-{% do sigma_workbook_integration_tests._ok('[stg_orders/Segment]' in child_formulas, "the child refers to the parent's passthrough column by its qualified name") %}
-{% do sigma_workbook_integration_tests._ok('Sum([Revenue])' in child_formulas and '[Revenue]' in child_formulas, "the child refers to the parent's calculated column by name") %}
+{% do sigma_workbook_integration_tests._ok('[Orders/Segment]' in child_formulas, "the child qualifies the parent's columns with the parent element's name (Orders), not the underlying table's") %}
+{% do sigma_workbook_integration_tests._ok('Sum([Revenue])' in child_formulas and '[Orders/Revenue]' in child_formulas, "the child reaches the parent's calculated column as [Parent/Column]") %}
+{# a table must not end up with two columns of the same name: child references to it would be ambiguous #}
+{% set visible_labels = [] %}
+{% for col in parent.columns if not col.get('hidden') %}
+  {% set label = col.name if col.get('name') else col.formula.split('/')[-1][:-1] %}
+  {% do sigma_workbook_integration_tests._ok(label not in visible_labels, 'the table has two visible columns called ' ~ label) %}
+  {% do visible_labels.append(label) %}
+{% endfor %}
+{% do sigma_workbook_integration_tests._ok(parent.columns | selectattr('hidden') | list | length > 0, 'columns added only to serve formulas or filters are hidden') %}
+{% do sigma_workbook_integration_tests._ok(parent.order | length == parent.columns | rejectattr('hidden') | list | length, 'every visible table column is in the table order, and no hidden one is') %}
 {% set control_ids = controls | map(attribute='controlId') | list %}
 {% do sigma_workbook_integration_tests._ok(control_ids == ['region-control', 'order-date-control'], 'control ids default to <name>-control so they cannot collide with a column called ' ~ control_ids) %}
 {# page membership is carried only by the layout: the Breakdown page holds the donut, not the line chart #}
@@ -274,7 +283,7 @@
 {% do sigma_workbook_integration_tests._ok(sigma_workbook.even_widths(3) == [8, 8, 8] and sigma_workbook.even_widths(4) == [6, 6, 6, 6] and sigma_workbook.even_widths(5) == [5, 5, 5, 5, 4], 'even_widths matches the 3/4/5-KPI band widths') %}
 {% do sigma_workbook_integration_tests._ok(sigma_workbook.titleize('order_date') == 'Order Date' and sigma_workbook.titleize('ARR') == 'ARR', 'titleize title-cases snake_case but leaves mixed case alone') %}
 {% do sigma_workbook_integration_tests._ok(sigma_workbook.formula_for('order_date', {'kind': 'warehouse-table', '_name': 'T'}) == '[T/Order Date]', 'bare column names get the source prefix') %}
-{% do sigma_workbook_integration_tests._ok(sigma_workbook.formula_for('order_date', {'kind': 'table'}) == '[Order Date]', 'element sources need no prefix') %}
+{% do sigma_workbook_integration_tests._ok(sigma_workbook.formula_for('order_date', {'kind': 'table', '_name': 'Parent'}) == '[Parent/Order Date]', 'columns of a parent element are qualified with its name') %}
 {% do sigma_workbook_integration_tests._ok(sigma_workbook.formula_for('Sum([Amount])', {'kind': 'warehouse-table', '_name': 'T'}) == 'Sum([Amount])', 'formulas are passed through untouched') %}
 {% do sigma_workbook_integration_tests._ok(sigma_workbook.color('primary') == '#1A70F1' and sigma_workbook.color('#123456') == '#123456' and sigma_workbook.color('primary', {'colors': {'primary': '#000000'}}) == '#000000', 'color() resolves tokens, hex literals and overrides') %}
 {% do sigma_workbook_integration_tests._ok(sigma_workbook.format_percent(2).formatString == '.2%' and sigma_workbook.format_date().kind == 'datetime', 'format helpers') %}
