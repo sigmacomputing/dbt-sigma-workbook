@@ -849,7 +849,7 @@ macros:
         description: Control elements. Default `[]`.
 
   - name: dashboard_page
-    description: "One page laid out as title -> filters -> KPI band -> chart rows -> extra elements -> detail table, from data alone. The body of `simple_dashboard` and the building block for `executive_scorecard`, `leaderboard` and `report`. Returns a page for `workbook()`."
+    description: "One page laid out as title -> filters -> KPI band -> chart rows -> extra elements -> detail table, from data alone. The body of `simple_dashboard` and the building block for `executive_scorecard`, `simple_leaderboard` and `report`. Returns a page for `workbook()`."
     arguments:
       - name: name
         type: string
@@ -891,7 +891,7 @@ macros:
         type: string
         description: Names the caller in error messages. Default `dashboard_page`.
 
-  - name: leaderboard
+  - name: simple_leaderboard
     description: "A ranking dashboard: title -> filters -> KPI band -> one horizontal bar chart per dimension, ranked by `measure` with data labels -> an optional breakdown pivot table."
     arguments:
       - name: name

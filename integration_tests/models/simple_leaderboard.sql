@@ -1,6 +1,6 @@
 {# A leaderboard: two dimensions ranked by one measure, plus a breakdown of the first. Nothing here is
    specific to the sample orders table; swap in any source, dimensions and measure. #}
-{% set spec = sigma_workbook.leaderboard(
+{% set spec = sigma_workbook.simple_leaderboard(
     name='Leaderboard',
     source=sigma_workbook.from_ref('stg_orders'),
     dimensions=['region', 'segment'],

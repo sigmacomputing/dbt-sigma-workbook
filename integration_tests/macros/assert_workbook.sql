@@ -182,7 +182,7 @@
     {% do discovered.append(node.name) %}
   {% endif %}
 {% endfor %}
-{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model', 'sigma_leaderboard'] %}
+{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model', 'simple_leaderboard'] %}
   {% do sigma_workbook_integration_tests._ok(required in discovered, 'workbook model ' ~ required ~ ' was discovered in the graph (found ' ~ discovered ~ ')') %}
 {% endfor %}
 {% for model_name in discovered %}
@@ -248,7 +248,7 @@
 {% do sigma_workbook_integration_tests._ok(sigma_workbook_integration_tests._find(tall.contents.elements, 'kpi-chart', 'Count').trend.shape == 'area', 'trend: true on a KPI with a timeline shows a sparkline') %}
 
 {# ---- leaderboard: one ranked horizontal bar chart per dimension, plus a breakdown pivot ---- #}
-{% set lb = sigma_workbook_integration_tests._spec_of('sigma_leaderboard').contents %}
+{% set lb = sigma_workbook_integration_tests._spec_of('simple_leaderboard').contents %}
 {% for title in ['Total by Region', 'Total by Segment'] %}
   {% set lb_bar = sigma_workbook_integration_tests._find(lb.elements, 'bar-chart', title) %}
   {% do sigma_workbook_integration_tests._ok(lb_bar.orientation == 'horizontal' and lb_bar.dataLabel.labels == 'shown' and lb_bar.xAxis.sort.direction == 'descending', title ~ ' is a horizontal bar chart ranked largest first, with labels') %}
@@ -259,7 +259,7 @@
 {% do sigma_workbook_integration_tests._ok(lb_control.filters | length == 4, 'the leaderboard filter is wired to the KPI, both charts and the pivot') %}
 
 {# ---- generic: nothing in the leaderboard knows about the sample orders table ---- #}
-{% set standings = sigma_workbook.leaderboard('Team standings', sigma_workbook.from_ref('stg_orders'), dimensions=['team_name'], measure='Sum([Points])', measure_name='Points') %}
+{% set standings = sigma_workbook.simple_leaderboard('Team standings', sigma_workbook.from_ref('stg_orders'), dimensions=['team_name'], measure='Sum([Points])', measure_name='Points') %}
 {% do sigma_workbook_integration_tests._find(standings.contents.elements, 'bar-chart', 'Points by Team Name') %}
 
 {# ---- theme: project var + per-workbook override + Sigma-blue default ---- #}

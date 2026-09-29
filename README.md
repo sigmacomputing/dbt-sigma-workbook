@@ -84,12 +84,12 @@ Pair the model with an `exposures:` entry so `dbt ls -s +exposure:sales_dashboar
 
 ## Dashboard styles
 
-`simple_dashboard` is the general-purpose shape; `leaderboard` is a second one built from the same pieces. Both take the same `kpis` / `charts` / `filters` mappings and are generic: they know nothing about your data, only which fields and measures you point them at.
+`simple_dashboard` is the general-purpose shape; `simple_leaderboard` is a second one built from the same pieces. Both take the same `kpis` / `charts` / `filters` mappings and are generic: they know nothing about your data, only which fields and measures you point them at.
 
 | Composite | Shape | Use it for |
 | --- | --- | --- |
 | `simple_dashboard` | title, filters, KPI band, chart pairs, detail table | a first dashboard; every part is optional |
-| `leaderboard` | KPI band, one ranked horizontal bar chart per dimension, optional breakdown pivot | who is on top, by any measure: teams, products, regions, accounts |
+| `simple_leaderboard` | KPI band, one ranked horizontal bar chart per dimension, optional breakdown pivot | who is on top, by any measure: teams, products, regions, accounts |
 
 **A scorecard is a `simple_dashboard`** with a few KPIs and one or two charts, no `table_columns`, taller tiles and sparklines: `kpi_h=7` and `chart_h=12` resize them, and `trend: true` on a KPI with a `timeline` adds the sparkline.
 
@@ -106,7 +106,7 @@ Pair the model with an `exposures:` entry so `dbt ls -s +exposure:sales_dashboar
     chart_h=12,
 ) %}
 
-{% set spec = sigma_workbook.leaderboard(
+{% set spec = sigma_workbook.simple_leaderboard(
     name='Team standings',
     source=sigma_workbook.from_ref('scores'),
     dimensions=['team', 'region'],
@@ -115,7 +115,7 @@ Pair the model with an `exposures:` entry so `dbt ls -s +exposure:sales_dashboar
 ) %}
 ```
 
-`leaderboard` is a thin layer over `dashboard_page`, which is public: call it directly to build a page in the `simple_dashboard` layout and mix it with hand-built pages in a `workbook()`. A runnable leaderboard is in [`integration_tests/models/`](integration_tests/models).
+`simple_leaderboard` is a thin layer over `dashboard_page`, which is public: call it directly to build a page in the `simple_dashboard` layout and mix it with hand-built pages in a `workbook()`. A runnable leaderboard is in [`integration_tests/models/`](integration_tests/models).
 
 ## Building your own layout
 
@@ -167,7 +167,7 @@ Building blocks, smallest to largest:
 | **Fields** | `field`, `format_number`, `format_currency`, `format_percent`, `format_date`, `format` |
 | **Elements** | `table`, `kpi`, `bar_chart`, `line_chart`, `area_chart`, `scatter_chart`, `pie_chart`, `donut_chart`, `pivot_table`, `text`, `title`, `heading`, `divider`, `container` |
 | **Controls** | `list_control`, `date_range_control`, `text_control`, `number_range_control` |
-| **Composites** | `row`, `kpi_row`, `dashboard_header`, `dashboard_page`, `simple_dashboard`, `leaderboard` |
+| **Composites** | `row`, `kpi_row`, `dashboard_header`, `dashboard_page`, `simple_dashboard`, `simple_leaderboard` |
 | **Assembly** | `page`, `workbook`, `materialize` |
 | **Escape hatches** | `extend`, `raw` |
 
@@ -337,7 +337,7 @@ Full signatures are in [`macros/schema.yml`](macros/schema.yml). Highlights:
 | `page(name, elements)` | `elements` may mix elements and lists of elements. |
 | `materialize(spec, materialized='view')` | Attaches the spec to the model. |
 | `simple_dashboard(name, source, kpis, charts, filters, table_columns, kpi_h, chart_h, ...)` | A whole dashboard from data. |
-| `leaderboard(name, source, dimensions, measure, kpis, detail_measures, filters, ...)` | Ranked horizontal bars per dimension, plus a breakdown pivot. |
+| `simple_leaderboard(name, source, dimensions, measure, kpis, detail_measures, filters, ...)` | Ranked horizontal bars per dimension, plus a breakdown pivot. |
 | `dashboard_page(name, source, kpis, charts, filters, table_columns, extras, ...)` | One such page, for mixing into your own `workbook()`. |
 
 Elements all take `source`, `name` / `key`, `w`, `h`, `style`, plus:

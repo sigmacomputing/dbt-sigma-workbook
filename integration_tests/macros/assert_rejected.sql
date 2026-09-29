@@ -131,7 +131,7 @@
 {% endmacro %}
 
 {% macro assert_leaderboard_without_dimensions_rejected() %}
-{% do sigma_workbook.leaderboard('L', sigma_workbook_integration_tests._src(), dimensions=[], measure='Count()') %}
+{% do sigma_workbook.simple_leaderboard('L', sigma_workbook_integration_tests._src(), dimensions=[], measure='Count()') %}
 {% endmacro %}
 
 {% macro assert_malformed_field_rejected() %}

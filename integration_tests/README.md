@@ -25,7 +25,7 @@ dbt run-operation assert_workbooks      # structural assertions
 | --- | --- |
 | `sigma_sales_dashboard` | Everything built from primitives: two pages, KPIs with comparison / timeline / sparkline, bar (with `extend`), line, donut, pivot, a chart built on a table element, a table with a calculated column, list and date controls wired to several elements, containers and rows, a `raw` button, a divider, text. |
 | `sigma_sales_simple` | The same idea in one call: `simple_dashboard`. |
-| `sigma_leaderboard` | `leaderboard`: two dimensions ranked by one measure, plus a breakdown pivot. |
+| `simple_leaderboard` | `simple_leaderboard`: two dimensions ranked by one measure, plus a breakdown pivot. |
 | `sigma_sales_from_data_model` | A workbook that reads the `orders` table of `sigma_sales_model`, with a per-workbook theme override. |
 | `sigma_sales_model` | A Sigma data model (via `sigma_data_models`), so the interop can be checked against the real package. |
 

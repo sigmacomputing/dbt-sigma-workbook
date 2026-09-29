@@ -112,7 +112,7 @@
 
      title -> filters -> KPI band -> chart rows -> extra elements -> detail table
 
-   from data alone; the body of `simple_dashboard`, and the building block for `leaderboard`.
+   from data alone; the body of `simple_dashboard`, and the building block for `simple_leaderboard`.
    `kpis`, `charts`, `filters` and `table_columns` are as in `simple_dashboard`; `extras` are elements you built yourself (a pivot table, a `raw` element), each placed on its own
    row and filtered like the rest. `kpi_h` and `chart_h` set the KPI and chart heights;
    `charts_per_row` how many charts share a row. `where` names the caller in error messages.
@@ -187,11 +187,11 @@
    them by. Each dimension gets a horizontal bar chart sorted by the measure, largest first, with data
    labels. `detail_measures`, if given, adds a pivot table breaking the first dimension down by the
    measure and those extra measures. `kpis` and `filters` are as in `simple_dashboard`. #}
-{% macro leaderboard(name, source, dimensions, measure, measure_name=none, kpis=[], detail_measures=[], filters=[], subtitle=none, theme={}) %}
+{% macro simple_leaderboard(name, source, dimensions, measure, measure_name=none, kpis=[], detail_measures=[], filters=[], subtitle=none, theme={}) %}
 {% if not dimensions %}
-  {% do sigma_workbook.fail('leaderboard', "dimensions is required - list the fields to rank.") %}
+  {% do sigma_workbook.fail('simple_leaderboard', "dimensions is required - list the fields to rank.") %}
 {% endif %}
-{% set source = sigma_workbook.resolve_source(source, 'leaderboard') %}
+{% set source = sigma_workbook.resolve_source(source, 'simple_leaderboard') %}
 {% set measure_label = measure_name or (measure.get('name') if measure is mapping else none) or measure %}
 {% set charts = [] %}
 {% for dim in dimensions %}
@@ -207,6 +207,6 @@
   {% set first_label = (first.get('name') or first.get('formula')) if first is mapping else sigma_workbook.titleize(first) %}
   {% do extras.append(sigma_workbook.pivot_table(source, [measure] + detail_measures, rows=first, name=first_label ~ ' breakdown', key='leaderboard-breakdown')) %}
 {% endif %}
-{% set page = sigma_workbook.dashboard_page(name, source, kpis=kpis, charts=charts, filters=filters, subtitle=subtitle, extras=extras, where='leaderboard') %}
+{% set page = sigma_workbook.dashboard_page(name, source, kpis=kpis, charts=charts, filters=filters, subtitle=subtitle, extras=extras, where='simple_leaderboard') %}
 {% do return(sigma_workbook.workbook(name, [page], theme=theme)) %}
 {% endmacro %}
