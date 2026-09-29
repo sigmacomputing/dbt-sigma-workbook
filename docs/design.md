@@ -62,8 +62,8 @@ Short answer: composable enough that the common cases need no escape, and the es
 - **Sources at parse time.** `from_ref` builds a path from `target` rather than reading the referenced relation, because `ref()` cannot resolve other models at parse time. A project with `generate_schema_name` overrides has to pass `schema=`. A possible improvement is a small dispatchable macro (`sigma_workbook__relation_path`) users override once.
 - **Formulas are opaque strings.** Sigma validates them (`--push --dry-run`); the package does not. A tiny formula builder (`sigma_workbook.sum('amount')`) would help typos but not semantics, and would need to track Sigma's function set.
 - **Sigma-side identity.** Ids are stable at compile time, but Sigma may assign its own on first create; the package does not read them back. `workbook_id=` updates an existing workbook (a full replace of its contents) but there is no drift detection.
-- **Controls target charts/KPIs with the `table` filter kind.** The schema documents `table` sources for filters; dry run accepts the result, and it is the same shape Sigma's own controls use for non-table targets, but it has only been validated, not observed in a rendered workbook.
-- **Not rendered.** Nothing here has been opened in Sigma's UI. Structure, formulas, references, sources and layout are validated by Sigma; appearance is not.
+- **Controls target charts/KPIs with the `table` filter kind.** The schema documents `table` sources for filters; dry run accepts the result, and it is the same shape Sigma's own controls use for non-table targets, and it has been checked in a rendered workbook.
+- **Rendering is checked by hand.** Generated workbooks have been pushed to a real organization and opened in Sigma's UI, but CI has no Sigma credentials, so appearance is not covered by automated tests.
 
 ## Adding an element (the extension recipe)
 

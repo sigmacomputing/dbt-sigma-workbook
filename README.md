@@ -347,7 +347,7 @@ bash scripts/run_integration_tests_duckdb.sh   # the whole suite; no credentials
 python -m unittest scripts/test_export_workbooks.py
 ```
 
-The [integration suite](integration_tests/README.md) builds workbooks of every shape, checks each compiled spec, validates it against Sigma's request schema, and confirms that 28 kinds of invalid input are rejected. Design notes and a critique of the abstraction are in [`docs/design.md`](docs/design.md).
+The [integration suite](integration_tests/README.md) builds workbooks of every shape, checks each compiled spec, validates it against Sigma's request schema, and confirms that 28 kinds of invalid input are rejected. Design notes and a critique of the abstraction are in [`docs/design.md`](docs/design.md). Contributions are welcome; see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
