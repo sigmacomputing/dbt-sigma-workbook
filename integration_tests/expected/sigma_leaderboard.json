@@ -1,23 +1,23 @@
 {
-  "name": "Sales leaderboard",
+  "name": "Leaderboard",
   "contents": {
     "schemaVersion": 1,
     "kind": "workbook",
     "pages": [
       {
-        "id": "0ce23b5c01",
-        "name": "Sales leaderboard"
+        "id": "a0cf10bfa8",
+        "name": "Leaderboard"
       }
     ],
     "elements": [
       {
-        "id": "8005a8c779",
+        "id": "7fbba94282",
         "kind": "text",
-        "body": "# Sales leaderboard",
+        "body": "# Leaderboard",
         "verticalAlign": "center"
       },
       {
-        "id": "f27932d982",
+        "id": "b08f1de6ca",
         "kind": "container",
         "style": {
           "padding": "none",
@@ -34,23 +34,23 @@
           {
             "source": {
               "kind": "table",
-              "elementId": "83464a9bf5"
+              "elementId": "83d82f476a"
             },
-            "columnId": "81da8c2df8"
+            "columnId": "3ee498d27e"
           },
           {
             "source": {
               "kind": "table",
-              "elementId": "ddbc65b117"
+              "elementId": "6c831d6c8f"
             },
-            "columnId": "4fe2aec4b6"
+            "columnId": "1d579b1be1"
           },
           {
             "source": {
               "kind": "table",
-              "elementId": "92590256d2"
+              "elementId": "c9041033db"
             },
-            "columnId": "63e0d96e17"
+            "columnId": "f89b1bfb96"
           },
           {
             "source": {
@@ -66,9 +66,9 @@
           "kind": "source",
           "source": {
             "kind": "table",
-            "elementId": "83464a9bf5"
+            "elementId": "83d82f476a"
           },
-          "columnId": "81da8c2df8"
+          "columnId": "3ee498d27e"
         }
       },
       {
@@ -80,7 +80,7 @@
         }
       },
       {
-        "id": "83464a9bf5",
+        "id": "83d82f476a",
         "kind": "kpi-chart",
         "source": {
           "kind": "warehouse-table",
@@ -93,7 +93,7 @@
         },
         "columns": [
           {
-            "id": "7ddf1254f5",
+            "id": "1ace0c1cf3",
             "formula": "Sum([Amount])",
             "format": {
               "kind": "number",
@@ -107,21 +107,21 @@
             }
           },
           {
-            "id": "271652d713",
+            "id": "39476ca9df",
             "formula": "[stg_orders/Amount]"
           },
           {
-            "id": "81da8c2df8",
+            "id": "3ee498d27e",
             "formula": "[stg_orders/Segment]"
           }
         ],
         "value": {
-          "columnId": "7ddf1254f5",
+          "columnId": "1ace0c1cf3",
           "color": "#0a0a0a",
           "fontWeight": "bold"
         },
         "name": {
-          "text": "Revenue",
+          "text": "Total",
           "color": "#737373",
           "fontWeight": "normal",
           "fontSize": 14
@@ -146,7 +146,7 @@
         }
       },
       {
-        "id": "ddbc65b117",
+        "id": "6c831d6c8f",
         "kind": "bar-chart",
         "source": {
           "kind": "warehouse-table",
@@ -159,32 +159,32 @@
         },
         "columns": [
           {
-            "id": "f09068fc27",
+            "id": "8ccd78f09b",
             "formula": "[stg_orders/Region]"
           },
           {
-            "id": "c3a9aa2c61",
+            "id": "f556e25a33",
             "formula": "Sum([Amount])"
           },
           {
-            "id": "b4eccd1108",
+            "id": "037fef7900",
             "formula": "[stg_orders/Amount]"
           },
           {
-            "id": "4fe2aec4b6",
+            "id": "1d579b1be1",
             "formula": "[stg_orders/Segment]"
           }
         ],
         "xAxis": {
-          "columnId": "f09068fc27",
+          "columnId": "8ccd78f09b",
           "sort": {
-            "by": "c3a9aa2c61",
+            "by": "f556e25a33",
             "direction": "descending"
           }
         },
         "yAxis": {
           "columnIds": [
-            "c3a9aa2c61"
+            "f556e25a33"
           ]
         },
         "color": {
@@ -195,7 +195,7 @@
         "dataLabel": {
           "labels": "shown"
         },
-        "name": "Revenue by Region",
+        "name": "Total by Region",
         "style": {
           "backgroundColor": "#ffffff",
           "borderRadius": "round",
@@ -204,7 +204,7 @@
         }
       },
       {
-        "id": "92590256d2",
+        "id": "c9041033db",
         "kind": "bar-chart",
         "source": {
           "kind": "warehouse-table",
@@ -217,32 +217,32 @@
         },
         "columns": [
           {
-            "id": "9013d04694",
+            "id": "650059634d",
             "formula": "[stg_orders/Segment]"
           },
           {
-            "id": "b4f3c16465",
+            "id": "6efd9f42fd",
             "formula": "Sum([Amount])"
           },
           {
-            "id": "36c46dd3dc",
+            "id": "8719a9ef26",
             "formula": "[stg_orders/Amount]"
           },
           {
-            "id": "63e0d96e17",
+            "id": "f89b1bfb96",
             "formula": "[stg_orders/Segment]"
           }
         ],
         "xAxis": {
-          "columnId": "9013d04694",
+          "columnId": "650059634d",
           "sort": {
-            "by": "b4f3c16465",
+            "by": "6efd9f42fd",
             "direction": "descending"
           }
         },
         "yAxis": {
           "columnIds": [
-            "b4f3c16465"
+            "6efd9f42fd"
           ]
         },
         "color": {
@@ -253,7 +253,7 @@
         "dataLabel": {
           "labels": "shown"
         },
-        "name": "Revenue by Segment",
+        "name": "Total by Segment",
         "style": {
           "backgroundColor": "#ffffff",
           "borderRadius": "round",
@@ -341,7 +341,7 @@
         }
       }
     },
-    "layout": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Page type=\"grid\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\" id=\"0ce23b5c01\">\n  <Element elementId=\"8005a8c779\" gridColumn=\"1 / 25\" gridRow=\"1 / 4\"/>\n  <Container elementId=\"f27932d982\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"4 / 6\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"b8aa6c3578\" gridColumn=\"1 / 7\" gridRow=\"1 / 3\"/>\n  </Container>\n  <Container elementId=\"c675feb435\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"6 / 11\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"83464a9bf5\" gridColumn=\"1 / 25\" gridRow=\"1 / 6\"/>\n  </Container>\n  <Container elementId=\"adf8b21b54\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"11 / 25\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"ddbc65b117\" gridColumn=\"1 / 13\" gridRow=\"1 / 15\"/>\n    <Element elementId=\"92590256d2\" gridColumn=\"13 / 25\" gridRow=\"1 / 15\"/>\n  </Container>\n  <Element elementId=\"3a18b5f327\" gridColumn=\"1 / 25\" gridRow=\"25 / 39\"/>\n</Page>\n"
+    "layout": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Page type=\"grid\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\" id=\"a0cf10bfa8\">\n  <Element elementId=\"7fbba94282\" gridColumn=\"1 / 25\" gridRow=\"1 / 4\"/>\n  <Container elementId=\"b08f1de6ca\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"4 / 6\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"b8aa6c3578\" gridColumn=\"1 / 7\" gridRow=\"1 / 3\"/>\n  </Container>\n  <Container elementId=\"c675feb435\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"6 / 11\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"83d82f476a\" gridColumn=\"1 / 25\" gridRow=\"1 / 6\"/>\n  </Container>\n  <Container elementId=\"adf8b21b54\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"11 / 25\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"6c831d6c8f\" gridColumn=\"1 / 13\" gridRow=\"1 / 15\"/>\n    <Element elementId=\"c9041033db\" gridColumn=\"13 / 25\" gridRow=\"1 / 15\"/>\n  </Container>\n  <Element elementId=\"3a18b5f327\" gridColumn=\"1 / 25\" gridRow=\"25 / 39\"/>\n</Page>\n"
   },
   "folderId": "e7c79c61-94d4-458e-ab4c-f581a4c04a4c"
 }

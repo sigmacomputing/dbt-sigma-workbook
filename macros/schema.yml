@@ -872,9 +872,6 @@ macros:
       - name: extras
         type: list[any]
         description: Elements you built yourself (a pivot table, a `raw` element), each on its own row after the charts, and filtered like the rest. Default `[]`.
-      - name: scope
-        type: string
-        description: Prefixes default element keys and control ids so several pages can live in one workbook. `report` sets it to the page name.
       - name: kpi_h
         type: int
         description: Height of the KPI band in rows. Default 5.
@@ -943,22 +940,6 @@ macros:
       - name: subtitle
         type: string
         description: Muted line under the title.
-      - name: theme
-        type: dict[string,any]
-        description: Per-workbook theme overrides. Default `{}`.
-
-  - name: report
-    description: "A multi-page report: every page is laid out like `simple_dashboard` and has its own filters. Names, control ids and element keys are scoped to the page, so the same KPI or filter can appear on several pages; a control filters only its own page."
-    arguments:
-      - name: name
-        type: string
-        description: Workbook name.
-      - name: source
-        type: any
-        description: The default source for every page.
-      - name: pages
-        type: list[any]
-        description: "List of page mappings: `name` (required, unique) and any of `kpis`, `charts`, `filters`, `table_columns`, `table_name`, `subtitle`, `extras`, and `source` to override the report's. Must not be empty."
       - name: theme
         type: dict[string,any]
         description: Per-workbook theme overrides. Default `{}`.

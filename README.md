@@ -84,47 +84,35 @@ Pair the model with an `exposures:` entry so `dbt ls -s +exposure:sales_dashboar
 
 ## Dashboard styles
 
-`simple_dashboard` is one shape. The other data-driven composites are different shapes built from the same pieces, each taking the same `kpis` / `charts` / `filters` mappings:
+`simple_dashboard` is one shape. Two more are built from the same pieces and take the same `kpis` / `charts` / `filters` mappings. Both are generic: they know nothing about your data, only which fields and measures you point them at.
 
 | Composite | Shape | Use it for |
 | --- | --- | --- |
 | `simple_dashboard` | title, filters, KPI band, chart pairs, detail table | a general-purpose first dashboard |
-| `executive_scorecard` | 1-5 large KPIs (a sparkline for any with a `timeline`), 1-2 trend charts, no table | what leadership scans in seconds; more than 5 KPIs or 2 charts is refused |
-| `leaderboard` | KPI band, one ranked horizontal bar chart per dimension, optional breakdown pivot | who is on top: regions, reps, products |
-| `report` | several pages, each laid out like `simple_dashboard` with its own filters | a review with an overview page and detail pages |
+| `executive_scorecard` | 1-5 large KPIs (a sparkline for any with a `timeline`), 1-2 trend charts, no table | the few numbers scanned at a glance; more than 5 KPIs or 2 charts is refused |
+| `leaderboard` | KPI band, one ranked horizontal bar chart per dimension, optional breakdown pivot | who is on top, by any measure: teams, products, regions, accounts |
 
 ```sql
 {% set spec = sigma_workbook.executive_scorecard(
-    name='Sales scorecard',
-    source=sigma_workbook.from_ref('stg_orders'),
+    name='Support scorecard',
+    source=sigma_workbook.from_ref('tickets'),
     kpis=[
-      {'value': 'Sum([Amount])', 'name': 'Revenue', 'compare_to': 'Sum([Target Amount])'},
-      {'value': 'Count()', 'name': 'Orders', 'timeline': 'order_date'},
+      {'value': 'CountDistinct([Ticket Id])', 'name': 'Tickets', 'timeline': 'created_at'},
+      {'value': 'Avg([Hours To Resolve])', 'name': 'Time to resolve', 'direction': 'lower'},
     ],
-    charts=[{'type': 'line', 'x': 'DateTrunc("month", [Order Date])', 'y': 'Sum([Amount])', 'name': 'Revenue by month'}],
+    charts=[{'type': 'line', 'x': 'DateTrunc("week", [Created At])', 'y': 'Count()', 'name': 'Tickets by week'}],
 ) %}
 
 {% set spec = sigma_workbook.leaderboard(
-    name='Sales leaderboard',
-    source=sigma_workbook.from_ref('stg_orders'),
-    dimensions=['region', 'segment'],
-    measure='Sum([Amount])', measure_name='Revenue',
+    name='Team standings',
+    source=sigma_workbook.from_ref('scores'),
+    dimensions=['team', 'region'],
+    measure='Sum([Points])', measure_name='Points',
     detail_measures=['Count()'],
-) %}
-
-{% set spec = sigma_workbook.report(
-    name='Sales report',
-    source=sigma_workbook.from_ref('stg_orders'),
-    pages=[
-      {'name': 'Overview', 'kpis': [...], 'charts': [...], 'filters': [{'type': 'list', 'name': 'Region', 'column': 'region'}]},
-      {'name': 'Detail', 'table_columns': [...], 'filters': [{'type': 'list', 'name': 'Region', 'column': 'region'}]},
-    ],
 ) %}
 ```
 
-In a `report`, names, control ids and element keys are scoped to the page, so the same "Revenue" KPI or "Region" filter can appear on several pages. A control filters only its own page, because Sigma controls live on a page. A page can also take `extras` (elements you built yourself) and its own `source`.
-
-All four are thin layers over `dashboard_page`, which is public: call it directly to build a page in one of these layouts and mix it with hand-built pages in a `workbook()`. Runnable versions of each are in [`integration_tests/models/`](integration_tests/models).
+Both are thin layers over `dashboard_page`, which is public: call it directly to build a page in one of these layouts and mix it with hand-built pages in a `workbook()`. Runnable versions of each are in [`integration_tests/models/`](integration_tests/models).
 
 ## Building your own layout
 
@@ -176,7 +164,7 @@ Building blocks, smallest to largest:
 | **Fields** | `field`, `format_number`, `format_currency`, `format_percent`, `format_date`, `format` |
 | **Elements** | `table`, `kpi`, `bar_chart`, `line_chart`, `area_chart`, `scatter_chart`, `pie_chart`, `donut_chart`, `pivot_table`, `text`, `title`, `heading`, `divider`, `container` |
 | **Controls** | `list_control`, `date_range_control`, `text_control`, `number_range_control` |
-| **Composites** | `row`, `kpi_row`, `dashboard_header`, `dashboard_page`, `simple_dashboard`, `executive_scorecard`, `leaderboard`, `report` |
+| **Composites** | `row`, `kpi_row`, `dashboard_header`, `dashboard_page`, `simple_dashboard`, `executive_scorecard`, `leaderboard` |
 | **Assembly** | `page`, `workbook`, `materialize` |
 | **Escape hatches** | `extend`, `raw` |
 
@@ -348,8 +336,7 @@ Full signatures are in [`macros/schema.yml`](macros/schema.yml). Highlights:
 | `simple_dashboard(name, source, kpis, charts, filters, table_columns, ...)` | A whole dashboard from data. |
 | `executive_scorecard(name, source, kpis, charts, filters, ...)` | 1-5 large KPIs and 1-2 trend charts. |
 | `leaderboard(name, source, dimensions, measure, kpis, detail_measures, filters, ...)` | Ranked horizontal bars per dimension, plus a breakdown pivot. |
-| `report(name, source, pages, theme)` | A multi-page report; each page is a `simple_dashboard`-style layout. |
-| `dashboard_page(name, source, kpis, charts, filters, table_columns, extras, scope, ...)` | One such page, for mixing into your own `workbook()`. |
+| `dashboard_page(name, source, kpis, charts, filters, table_columns, extras, ...)` | One such page, for mixing into your own `workbook()`. |
 
 Elements all take `source`, `name` / `key`, `w`, `h`, `style`, plus:
 

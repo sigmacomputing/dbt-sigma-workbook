@@ -154,26 +154,9 @@
 {% do sigma_workbook.leaderboard('L', sigma_workbook_integration_tests._src(), dimensions=[], measure='Count()') %}
 {% endmacro %}
 
-{% macro assert_report_without_pages_rejected() %}
-{% do sigma_workbook.report('R', sigma_workbook_integration_tests._src(), pages=[]) %}
-{% endmacro %}
-
-{% macro assert_report_page_without_name_rejected() %}
-{% do sigma_workbook.report('R', sigma_workbook_integration_tests._src(), pages=[{'kpis': [{'value': 'Count()'}]}]) %}
-{% endmacro %}
-
-{% macro assert_report_duplicate_page_rejected() %}
-{% set page = {'name': 'A', 'kpis': [{'value': 'Count()', 'name': 'Orders'}]} %}
-{% do sigma_workbook.report('R', sigma_workbook_integration_tests._src(), pages=[page, page]) %}
-{% endmacro %}
-
-{% macro assert_report_empty_page_rejected() %}
-{% do sigma_workbook.report('R', sigma_workbook_integration_tests._src(), pages=[{'name': 'Empty'}]) %}
-{% endmacro %}
-
-{% macro assert_report_unknown_chart_type_rejected() %}
-{# the error must name the report page, not claim it came from simple_dashboard #}
-{% do sigma_workbook.report('R', sigma_workbook_integration_tests._src(), pages=[{'name': 'P', 'charts': [{'type': 'radar'}]}]) %}
+{% macro assert_scorecard_unknown_chart_type_rejected() %}
+{# the error must name the composite the user called, not claim it came from simple_dashboard #}
+{% do sigma_workbook.executive_scorecard('S', sigma_workbook_integration_tests._src(), kpis=[{'value': 'Count()'}], charts=[{'type': 'radar'}]) %}
 {% endmacro %}
 
 {% macro assert_malformed_field_rejected() %}

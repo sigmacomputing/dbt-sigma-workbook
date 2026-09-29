@@ -182,7 +182,7 @@
     {% do discovered.append(node.name) %}
   {% endif %}
 {% endfor %}
-{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model', 'sigma_sales_scorecard', 'sigma_sales_leaderboard', 'sigma_sales_report'] %}
+{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model', 'sigma_scorecard', 'sigma_leaderboard'] %}
   {% do sigma_workbook_integration_tests._ok(required in discovered, 'workbook model ' ~ required ~ ' was discovered in the graph (found ' ~ discovered ~ ')') %}
 {% endfor %}
 {% for model_name in discovered %}
@@ -235,22 +235,22 @@
 {% do sigma_workbook_integration_tests._ok(donut.id in breakdown_xml and line.id not in breakdown_xml, 'layout puts each element on the right page') %}
 
 {# ---- executive scorecard: few large KPIs, sparkline by default, trends, no table ---- #}
-{% set sc = sigma_workbook_integration_tests._spec_of('sigma_sales_scorecard').contents %}
+{% set sc = sigma_workbook_integration_tests._spec_of('sigma_scorecard').contents %}
 {% set sc_kinds = sc.elements | map(attribute='kind') | list %}
 {% set sc_kpis = sc.elements | selectattr('kind', 'equalto', 'kpi-chart') | list %}
 {% do sigma_workbook_integration_tests._ok(sc_kpis | length == 3 and sc.pages | length == 1, 'the scorecard has three KPIs on one page') %}
 {% do sigma_workbook_integration_tests._ok('table' not in sc_kinds and 'pivot-table' not in sc_kinds, 'a scorecard has no detail table or pivot') %}
 {% do sigma_workbook_integration_tests._ok((sc.elements | selectattr('kind', 'in', ['line-chart', 'bar-chart']) | list) | length == 2, 'the scorecard has its two trend charts') %}
-{% set sc_orders = sigma_workbook_integration_tests._find(sc.elements, 'kpi-chart', 'Orders') %}
-{% set sc_average = sigma_workbook_integration_tests._find(sc.elements, 'kpi-chart', 'Average order') %}
+{% set sc_orders = sigma_workbook_integration_tests._find(sc.elements, 'kpi-chart', 'Count') %}
+{% set sc_average = sigma_workbook_integration_tests._find(sc.elements, 'kpi-chart', 'Average') %}
 {% do sigma_workbook_integration_tests._ok(sc_orders.trend.shape == 'area' and sc_orders.timeline.columnId, 'a scorecard KPI with a timeline shows its sparkline without asking') %}
 {% do sigma_workbook_integration_tests._ok('trend' not in sc_average and 'timeline' not in sc_average, 'a scorecard KPI without a timeline gets no sparkline') %}
 {% set sc_control = sc.elements | selectattr('kind', 'equalto', 'control') | first %}
 {% do sigma_workbook_integration_tests._ok(sc_control.controlType == 'date-range' and sc_control.filters | length == 5, 'the scorecard date filter is wired to every KPI and chart') %}
 
 {# ---- leaderboard: one ranked horizontal bar chart per dimension, plus a breakdown pivot ---- #}
-{% set lb = sigma_workbook_integration_tests._spec_of('sigma_sales_leaderboard').contents %}
-{% for title in ['Revenue by Region', 'Revenue by Segment'] %}
+{% set lb = sigma_workbook_integration_tests._spec_of('sigma_leaderboard').contents %}
+{% for title in ['Total by Region', 'Total by Segment'] %}
   {% set lb_bar = sigma_workbook_integration_tests._find(lb.elements, 'bar-chart', title) %}
   {% do sigma_workbook_integration_tests._ok(lb_bar.orientation == 'horizontal' and lb_bar.dataLabel.labels == 'shown' and lb_bar.xAxis.sort.direction == 'descending', title ~ ' is a horizontal bar chart ranked largest first, with labels') %}
 {% endfor %}
@@ -259,17 +259,11 @@
 {% set lb_control = lb.elements | selectattr('kind', 'equalto', 'control') | first %}
 {% do sigma_workbook_integration_tests._ok(lb_control.filters | length == 4, 'the leaderboard filter is wired to the KPI, both charts and the pivot') %}
 
-{# ---- report: pages are independent; same-named KPIs and filters do not collide ---- #}
-{% set rp = sigma_workbook_integration_tests._spec_of('sigma_sales_report').contents %}
-{% do sigma_workbook_integration_tests._ok(rp.pages | map(attribute='name') | list == ['Overview', 'Detail'], 'the report has its pages, in order') %}
-{% set rp_revenue = rp.elements | selectattr('kind', 'equalto', 'kpi-chart') | selectattr('name.text', 'equalto', 'Revenue') | list %}
-{% do sigma_workbook_integration_tests._ok(rp_revenue | length == 2 and rp_revenue[0].id != rp_revenue[1].id, 'a KPI named Revenue on two pages gets two distinct ids') %}
-{% set rp_controls = rp.elements | selectattr('kind', 'equalto', 'control') | list %}
-{% do sigma_workbook_integration_tests._ok(rp_controls | map(attribute='controlId') | list == ['overview-region-control', 'detail-region-control', 'detail-order-control'], 'control ids are scoped to their page, so a Region filter can repeat') %}
-{% do sigma_workbook_integration_tests._ok(rp_controls[0].filters | length == 3 and rp_controls[1].filters | length == 2, "each page's filter is wired only to that page's elements") %}
-{% set rp_detail_xml = rp.layout.split('</Page>')[1] %}
-{% set rp_table = sigma_workbook_integration_tests._find(rp.elements, 'table', 'Orders') %}
-{% do sigma_workbook_integration_tests._ok(rp_table.id in rp_detail_xml and rp_table.id not in rp.layout.split('</Page>')[0], 'the detail table is on the Detail page only') %}
+{# ---- both are generic: nothing in them knows about the sample orders table ---- #}
+{% set standings = sigma_workbook.leaderboard('Team standings', sigma_workbook.from_ref('stg_orders'), dimensions=['team_name'], measure='Sum([Points])', measure_name='Points') %}
+{% do sigma_workbook_integration_tests._find(standings.contents.elements, 'bar-chart', 'Points by Team Name') %}
+{% set one_kpi = sigma_workbook.executive_scorecard('Uptime', sigma_workbook.from_ref('stg_orders'), kpis=[{'value': 'Avg([Uptime])', 'name': 'Availability'}]) %}
+{% do sigma_workbook_integration_tests._ok((one_kpi.contents.elements | selectattr('kind', 'equalto', 'kpi-chart') | list) | length == 1 and one_kpi.contents.elements | selectattr('kind', 'in', ['line-chart', 'bar-chart', 'table']) | list | length == 0, 'a scorecard can be a single KPI with no charts, filters or table') %}
 
 {# ---- theme: project var + per-workbook override + Sigma-blue default ---- #}
 {% do sigma_workbook_integration_tests._ok(dc.settings.theme.overrides.colors.highlight == '#1A70F1', 'default primary is Sigma blue') %}

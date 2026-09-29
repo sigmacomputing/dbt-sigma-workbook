@@ -39,8 +39,4 @@ assert_scorecard_without_kpis_rejected | sigma_workbook.executive_scorecard: giv
 assert_scorecard_too_many_kpis_rejected | sigma_workbook.executive_scorecard: give between 1 and 5 kpis (got 6)
 assert_scorecard_too_many_charts_rejected | sigma_workbook.executive_scorecard: give at most 2 charts (got 3)
 assert_leaderboard_without_dimensions_rejected | sigma_workbook.leaderboard: dimensions is required
-assert_report_without_pages_rejected | sigma_workbook.report: pages must not be empty
-assert_report_page_without_name_rejected | sigma_workbook.report: every page needs a `name`
-assert_report_duplicate_page_rejected | sigma_workbook.workbook: duplicate page name 'A'
-assert_report_empty_page_rejected | sigma_workbook.report page 'Empty': give at least one of kpis, charts or table_columns
-assert_report_unknown_chart_type_rejected | sigma_workbook.report page 'P': unknown chart type 'radar'
+assert_scorecard_unknown_chart_type_rejected | sigma_workbook.executive_scorecard: unknown chart type 'radar'

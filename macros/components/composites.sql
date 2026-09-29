@@ -48,27 +48,11 @@
 {% endmacro %}
 
 
-{# The `key` for an element described as data. An explicit `key` wins. Otherwise, when `scope` is set
-   (a report page's name), the element's name is prefixed with it so the same "Revenue" KPI can sit on
-   two pages without the ids colliding. With no scope and no key, none: the element's own name is used. #}
-{% macro scoped_key(spec, identity, scope=none) %}
-{% if spec.get('key') is not none %}
-  {% do return(spec.get('key')) %}
-{% endif %}
-{% if scope and identity %}
-  {% do return(scope ~ ':' ~ identity) %}
-{% endif %}
-{% do return(none) %}
-{% endmacro %}
-
-
 {# One KPI described as data: a {value, name, format, compare_to, timeline, period, trend, direction,
    key} mapping, the arguments of `kpi`. #}
-{% macro kpi_from_spec(source, spec, scope=none) %}
-{% set value = spec['value'] %}
-{% set key = sigma_workbook.scoped_key(spec, spec.get('name') or (value if value is string else none), scope) %}
+{% macro kpi_from_spec(source, spec) %}
 {% do return(sigma_workbook.kpi(
-  source, value, name=spec.get('name'), key=key, format=spec.get('format'),
+  source, spec['value'], name=spec.get('name'), key=spec.get('key'), format=spec.get('format'),
   compare_to=spec.get('compare_to'), timeline=spec.get('timeline'), period=spec.get('period', 'month'),
   trend=spec.get('trend', false), direction=spec.get('direction', 'higher')
 )) %}
@@ -78,11 +62,10 @@
 {# One chart described as data, for `simple_dashboard` and the other data-driven composites.
    Dispatches on `type`; the keys are the arguments of the matching chart macro (x/y for bar, line,
    area and scatter; category/value for pie and donut), plus `name`, `color`, `stacking`, `sort_by`,
-   `labels`, `horizontal` (bar) and `key`. `where` names the caller in error messages; `scope` prefixes
-   default keys (see `scoped_key`). #}
-{% macro chart_from_spec(source, spec, where='simple_dashboard', scope=none) %}
+   `labels`, `horizontal` (bar) and `key`. `where` names the caller in error messages. #}
+{% macro chart_from_spec(source, spec, where='simple_dashboard') %}
 {% set t = spec.get('type') %}
-{% set key = sigma_workbook.scoped_key(spec, spec.get('name'), scope) %}
+{% set key = spec.get('key') %}
 {% if t == 'bar' %}
   {% do return(sigma_workbook.bar_chart(source, spec['x'], spec['y'], color=spec.get('color'), name=spec.get('name'), key=key, stacking=spec.get('stacking'), sort_by=spec.get('sort_by', 'y'), labels=spec.get('labels', false), horizontal=spec.get('horizontal', false))) %}
 {% elif t == 'line' %}
@@ -102,9 +85,8 @@
 
 {# Filters described as data ({type, name, column}, type one of list, date_range, text), each wired to
    every element in `targets_of`, so one control narrows the whole page. Build controls last: they
-   can only target elements that already exist. With a `scope` (a report page's name) each control's
-   key and `controlId` carry it, since Sigma control ids are unique across the whole workbook. #}
-{% macro filter_controls(filters, targets_of, where='simple_dashboard', scope=none) %}
+   can only target elements that already exist. #}
+{% macro filter_controls(filters, targets_of, where='simple_dashboard') %}
 {% set controls = [] %}
 {% for f in filters %}
   {% set kind = f.get('type', 'list') %}
@@ -112,19 +94,12 @@
   {% for el in targets_of %}
     {% do targets.append((el, f['column'])) %}
   {% endfor %}
-  {% if scope %}
-    {% set key = scope ~ ':' ~ f['name'] %}
-    {% set control_id = ((scope ~ ' ' ~ f['name']) | lower | replace(' ', '-') | replace('_', '-')) ~ '-control' %}
-  {% else %}
-    {% set key = none %}
-    {% set control_id = none %}
-  {% endif %}
   {% if kind == 'list' %}
-    {% do controls.append(sigma_workbook.list_control(f['name'], targets=targets, key=key, control_id=control_id)) %}
+    {% do controls.append(sigma_workbook.list_control(f['name'], targets=targets)) %}
   {% elif kind == 'date_range' %}
-    {% do controls.append(sigma_workbook.date_range_control(f['name'], targets=targets, key=key, control_id=control_id)) %}
+    {% do controls.append(sigma_workbook.date_range_control(f['name'], targets=targets)) %}
   {% elif kind == 'text' %}
-    {% do controls.append(sigma_workbook.text_control(f['name'], targets=targets, key=key, control_id=control_id)) %}
+    {% do controls.append(sigma_workbook.text_control(f['name'], targets=targets)) %}
   {% else %}
     {% do sigma_workbook.fail(where, "unknown filter type '" ~ kind ~ "' - must be list, date_range or text.") %}
   {% endif %}
@@ -137,42 +112,40 @@
 
      title -> filters -> KPI band -> chart rows -> extra elements -> detail table
 
-   from data alone; the body of `simple_dashboard`, and the building block for `executive_scorecard`,
-   `leaderboard` and `report`. `kpis`, `charts`, `filters` and `table_columns` are as in
-   `simple_dashboard`; `extras` are elements you built yourself (a pivot table, a `raw` element), each
-   placed on its own row and filtered like the rest. `kpi_h` and `chart_h` set the KPI and chart
-   heights; `charts_per_row` how many charts share a row. `scope` (a page name) keeps keys and control
-   ids unique when several pages live in one workbook. `where` names the caller in error messages.
+   from data alone; the body of `simple_dashboard`, and the building block for `executive_scorecard`
+   and `leaderboard`. `kpis`, `charts`, `filters` and `table_columns` are as in `simple_dashboard`;
+   `extras` are elements you built yourself (a pivot table, a `raw` element), each placed on its own
+   row and filtered like the rest. `kpi_h` and `chart_h` set the KPI and chart heights;
+   `charts_per_row` how many charts share a row. `where` names the caller in error messages.
    Returns the page, ready for `workbook()`. #}
-{% macro dashboard_page(name, source, kpis=[], charts=[], filters=[], table_columns=none, subtitle=none, table_name='Detail', extras=[], scope=none, kpi_h=5, chart_h=none, charts_per_row=2, where='dashboard_page') %}
+{% macro dashboard_page(name, source, kpis=[], charts=[], filters=[], table_columns=none, subtitle=none, table_name='Detail', extras=[], kpi_h=5, chart_h=none, charts_per_row=2, where='dashboard_page') %}
 {% set source = sigma_workbook.resolve_source(source, where) %}
 {% if not (kpis or charts or table_columns or extras) %}
   {% do sigma_workbook.fail(where, "give at least one of kpis, charts or table_columns.") %}
 {% endif %}
-{% set prefix = (scope ~ ':') if scope else '' %}
 
 {% set tiles = [] %}
 {% for k in kpis %}
-  {% do tiles.append(sigma_workbook.kpi_from_spec(source, k, scope)) %}
+  {% do tiles.append(sigma_workbook.kpi_from_spec(source, k)) %}
 {% endfor %}
 
 {% set built = [] %}
 {% for c in charts %}
-  {% do built.append(sigma_workbook.chart_from_spec(source, c, where, scope)) %}
+  {% do built.append(sigma_workbook.chart_from_spec(source, c, where)) %}
 {% endfor %}
 
-{% set detail = sigma_workbook.table(source, table_columns, name=table_name, key=prefix ~ 'detail') if table_columns else none %}
+{% set detail = sigma_workbook.table(source, table_columns, name=table_name, key='detail') if table_columns else none %}
 
 {# Controls are built last so they can be wired to every element above. #}
 {% set targets_of = tiles + built + extras + ([detail] if detail is not none else []) %}
-{% set controls = sigma_workbook.filter_controls(filters, targets_of, where, scope) %}
+{% set controls = sigma_workbook.filter_controls(filters, targets_of, where) %}
 
 {% set body = sigma_workbook.dashboard_header(name, subtitle, controls) %}
 {% if tiles %}
-  {% do body.append(sigma_workbook.row(tiles, prefix ~ 'kpis', h=kpi_h)) %}
+  {% do body.append(sigma_workbook.row(tiles, 'kpis', h=kpi_h)) %}
 {% endif %}
 {% for chunk_start in range(0, built | length, charts_per_row) %}
-  {% do body.append(sigma_workbook.row(built[chunk_start:chunk_start + charts_per_row], prefix ~ 'charts:' ~ chunk_start, h=chart_h)) %}
+  {% do body.append(sigma_workbook.row(built[chunk_start:chunk_start + charts_per_row], 'charts:' ~ chunk_start, h=chart_h)) %}
 {% endfor %}
 {% for el in extras %}
   {% do body.append(el) %}
@@ -181,7 +154,7 @@
   {% do body.append(detail) %}
 {% endif %}
 
-{% do return(sigma_workbook.page(name, body, key=scope)) %}
+{% do return(sigma_workbook.page(name, body)) %}
 {% endmacro %}
 
 
@@ -260,38 +233,4 @@
 {% endif %}
 {% set page = sigma_workbook.dashboard_page(name, source, kpis=kpis, charts=charts, filters=filters, subtitle=subtitle, extras=extras, where='leaderboard') %}
 {% do return(sigma_workbook.workbook(name, [page], theme=theme)) %}
-{% endmacro %}
-
-
-{# A multi-page report: each page is a dashboard laid out like `simple_dashboard`, and each has its
-   own filters.
-
-     report('Sales review', source=orders, pages=[
-       {'name': 'Overview', 'kpis': [...], 'charts': [...], 'filters': [...]},
-       {'name': 'Detail', 'table_columns': [...], 'filters': [...]},
-     ])
-
-   A page is a mapping with `name` (required and unique) and any of `kpis`, `charts`, `filters`,
-   `table_columns`, `table_name`, `subtitle`, `extras` (elements you built yourself), and `source` to
-   read from something other than the report's. Names, control ids and element keys are scoped to
-   the page, so the same "Revenue" KPI or "Region" filter can appear on several pages. A control only
-   filters the elements of its own page: Sigma controls live on a page. #}
-{% macro report(name, source, pages, theme={}) %}
-{% if not pages %}
-  {% do sigma_workbook.fail('report', "pages must not be empty.") %}
-{% endif %}
-{% set built = [] %}
-{% for p in pages %}
-  {% if not p.get('name') %}
-    {% do sigma_workbook.fail('report', "every page needs a `name` (page " ~ loop.index ~ " has none).") %}
-  {% endif %}
-  {% do built.append(sigma_workbook.dashboard_page(
-    p['name'], p.get('source', source),
-    kpis=p.get('kpis', []), charts=p.get('charts', []), filters=p.get('filters', []),
-    table_columns=p.get('table_columns'), subtitle=p.get('subtitle'), table_name=p.get('table_name', 'Detail'),
-    extras=p.get('extras', []), scope=p['name'],
-    where="report page '" ~ p['name'] ~ "'"
-  )) %}
-{% endfor %}
-{% do return(sigma_workbook.workbook(name, built, theme=theme)) %}
 {% endmacro %}
