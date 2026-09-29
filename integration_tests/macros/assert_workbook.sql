@@ -70,7 +70,7 @@
 
 {# ---- the POST /v2/workbooks request body ---- #}
 {% do sigma_workbook_integration_tests._ok(spec.name, where ~ 'name is set') %}
-{% do sigma_workbook_integration_tests._ok(spec.folderId, where ~ 'folderId comes from the sigma_folder_id var') %}
+{% do sigma_workbook_integration_tests._ok(spec.folderId == var('sigma_folder_id'), where ~ 'folderId is the sigma_folder_id project var, not a hardcoded id') %}
 {% do sigma_workbook_integration_tests._ok(c.schemaVersion == 1 and c.kind == 'workbook', where ~ 'contents has schemaVersion 1 and kind workbook') %}
 {% do sigma_workbook_integration_tests._ok(c.pages | length > 0 and c.elements | length > 0, where ~ 'contents has pages and elements') %}
 {% do sigma_workbook_integration_tests._ok(c.settings.theme.overrides.colors.highlight, where ~ 'theme sets the highlight color') %}
@@ -121,6 +121,7 @@
       {% do sigma_workbook_integration_tests._ok(el.source.connectionId == var('sigma_connection_id'), where ~ 'warehouse source of ' ~ el.id ~ ' carries the sigma_connection_id project var, not a hardcoded id') %}
     {% elif el.source.kind == 'data-model' %}
       {% do sigma_workbook_integration_tests._ok(el.source.dataModelId and el.source.elementId, where ~ 'data-model source of ' ~ el.id ~ ' has ids') %}
+      {% do sigma_workbook_integration_tests._ok(el.source.dataModelId in var('sigma_data_model_ids').values(), where ~ 'data-model source of ' ~ el.id ~ ' carries an id from the sigma_data_model_ids project var, not a hardcoded id') %}
     {% endif %}
     {% do sigma_workbook_integration_tests._ok(own | length > 0, where ~ kind ~ ' ' ~ el.id ~ ' has columns') %}
   {% endif %}

@@ -12,10 +12,11 @@ Comparison is on parsed JSON, so key order and whitespace don't matter; the diff
 key-sorted, indented form. Missing and unexpected files are failures too, so adding or removing a
 workbook model can't go unnoticed.
 
-Environment-specific ids are not part of the snapshot. Every `connectionId` is replaced with a
-placeholder on both sides (and golden files are written that way), so the connection id comes from the
-`sigma_connection_id` project var and never lives in the repo. `assert_workbooks` separately checks
-that each warehouse source carries exactly that var.
+Environment-specific ids are not part of the snapshot. Every `connectionId`, `folderId` and
+`dataModelId` is replaced with a placeholder on both sides (and golden files are written that way), so
+these ids come from the `sigma_connection_id`, `sigma_folder_id` and `sigma_data_model_ids` project vars
+and never live in the repo. `assert_workbooks` separately checks that the specs carry exactly those
+vars.
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ from pathlib import Path
 DEFAULT_EXPECTED = Path(__file__).resolve().parent.parent / "integration_tests" / "expected"
 MAX_DIFF_LINES = 60
 # JSON keys whose string values depend on the environment, and what stands in for them.
-PLACEHOLDERS = {"connectionId": "<connectionId>"}
+PLACEHOLDERS = {"connectionId": "<connectionId>", "folderId": "<folderId>", "dataModelId": "<dataModelId>"}
 
 
 def normalize(value):

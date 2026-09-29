@@ -31,7 +31,7 @@ dbt run-operation assert_workbooks      # structural assertions
 
 `dbt_project.yml` sets the project vars (`sigma_connection_id`, `sigma_folder_id`, `sigma_data_model_ids`, `sigma_workbook_theme`) and `flags: validate_macro_args: true`, which makes dbt check `macros/schema.yml` against the real macro signatures (CI adds `--warn-error` on dbt 1.x).
 
-**The connection id is not hardcoded anywhere in the tests.** `sigma_connection_id` reads the `SIGMA_CONNECTION_ID` environment variable and otherwise defaults to an all-zeros placeholder. The assertions compare every warehouse source with `var('sigma_connection_id')`, the last step of the script re-runs them under a `--vars` override, and the golden files store `<connectionId>` instead of a value, so the suite passes whatever id you supply.
+**No Sigma id is hardcoded anywhere in the tests.** The connection, folder and data model ids are project vars that read `SIGMA_CONNECTION_ID`, `SIGMA_FOLDER_ID` and `SIGMA_DATA_MODEL_ID` and otherwise default to `00000000-0000-0000-0000-0000000000NN` placeholders. The assertions compare the compiled specs with those vars, the last step of the script re-runs them under a `--vars` override, and the golden files store `<connectionId>`, `<folderId>` and `<dataModelId>` instead of values, so the suite passes whatever ids you supply. `scripts/test_no_leaked_ids.py` fails the build if a real-looking id, an email address, a non-public Sigma host or a local path is committed anywhere in the repository.
 
 ## What the suite checks
 
@@ -56,6 +56,7 @@ dbt run-operation assert_workbooks      # structural assertions
 Separately, `python -m unittest discover -s scripts -p "test_*.py"` runs the script tests:
 
 - `test_export_workbooks.py`: the export/push script against a fake Sigma API on localhost (auth, create, dry run, update, legacy endpoints, HTTP errors, refusal to push with problems).
+- `test_no_leaked_ids.py`: scans the tracked files for real-looking ids (only placeholders are allowed), email addresses (only `example.com`), non-public Sigma hosts and local paths, and proves the scanner can find each kind. It also runs as a pre-commit hook (`pre-commit install` once per clone), so a leak is stopped before it is committed rather than after.
 - `test_check_golden.py`: the golden comparison (changed values, list order, missing and unexpected files, truncated diffs, `--update`), plus a sanity check of the committed golden files.
 - `test_validate_against_sigma_schema.py`: proves the schema check can fail. It breaks the golden specs (missing required fields, unknown element kind, wrong type, bad enum, bad source kind) and requires the validator to object. Note that the published schema alone accepts a body with no `contents`, because the request is a union that includes the legacy `spec` shape; the export step asserts `contents` for that reason.
 

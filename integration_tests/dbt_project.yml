@@ -15,14 +15,18 @@ flags:
   validate_macro_args: true
 
 vars:
-  # The Sigma connection the workbooks read from. Nothing is hardcoded in the tests: they compare
-  # against this var, and the golden files hold a placeholder. Supply a real id with SIGMA_CONNECTION_ID
-  # (e.g. before `export_workbooks.py --push --dry-run`); the default is a placeholder, not a real id.
-  sigma_connection_id: "{{ env_var('SIGMA_CONNECTION_ID', '00000000-0000-0000-0000-000000000000') }}"
-  sigma_folder_id: e7c79c61-94d4-458e-ab4c-f581a4c04a4c
+  # The Sigma ids the workbooks use. Nothing is hardcoded in the tests: they compare against these vars,
+  # and the golden files hold placeholders. Supply real ids through the environment (e.g. before
+  # `export_workbooks.py --push --dry-run`); the defaults are placeholders, not real ids, and no real id
+  # belongs in this repository.
+  #   SIGMA_CONNECTION_ID  Sigma connection to the warehouse
+  #   SIGMA_FOLDER_ID      folder new workbooks are created in
+  #   SIGMA_DATA_MODEL_ID  the Sigma data model created from sigma_sales_model
+  sigma_connection_id: "{{ env_var('SIGMA_CONNECTION_ID', '00000000-0000-0000-0000-000000000001') }}"
+  sigma_folder_id: "{{ env_var('SIGMA_FOLDER_ID', '00000000-0000-0000-0000-000000000002') }}"
   # Recorded after the data model was first created in Sigma (see README -> "Data models").
   sigma_data_model_ids:
-    sigma_sales_model: 5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f
+    sigma_sales_model: "{{ env_var('SIGMA_DATA_MODEL_ID', '00000000-0000-0000-0000-000000000003') }}"
   # Re-skin every workbook: only the keys listed here change, the rest keep the package defaults.
   sigma_workbook_theme:
     colors:

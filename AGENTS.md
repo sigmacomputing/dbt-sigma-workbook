@@ -14,6 +14,7 @@ Read `README.md` for usage and `docs/design.md` for the reasoning, the composabi
 pip install -r ci/requirements-dbt1.txt        # dbt 1.x;  ci/requirements-dbt2.txt for dbt 2.x
 bash scripts/run_integration_tests_duckdb.sh   # the whole suite (DuckDB, no credentials)
 python -m unittest discover -s scripts -p "test_*.py"
+pip install pre-commit && pre-commit install   # once per clone: runs the leak guard before every commit
 ```
 
 The script honors `DBT`, `PYTHON` and `PARSE_FLAGS`. CI runs it on dbt 1.x (with `PARSE_FLAGS=--warn-error`) and on dbt 2.x. **Both must pass**; dbt 2.x is the stricter of the two.
@@ -34,6 +35,7 @@ Live validation against Sigma (needs credentials, creates nothing): `python scri
 - **Unqualified formula references** (`Sum([Amount])`) get a qualified passthrough column (`[table/Amount]`) added by `add_column`; that is Sigma's own export convention. Keep it.
 - **Colors are late-bound**: element macros call `color_ref('primary')` (a marker), never `color()` (a hex), so a workbook-level `theme=` reaches them. `workbook()` resolves the markers.
 - **Two output formats**: `contents` (default; `POST /v2/workbooks`, layout tags `<Element>`/`<Container>`) and `spec` (deprecated; nested pages, `<LayoutElement>`/`<GridContainer>`). The current API rejects the legacy tags.
+- **Never commit a real Sigma id, email address, internal host or local path.** Connection, folder and data model ids come from project vars (`SIGMA_*` environment variables with `00000000-0000-0000-0000-0000000000NN` placeholder defaults); use `<your-...-id>` placeholders in docs. `scripts/test_no_leaked_ids.py` enforces this: it runs as a pre-commit hook (`.pre-commit-config.yaml`, after `pre-commit install`) and CI fails if it is broken. Git history is permanent, so the fix for a leak that was already committed is not a follow-up commit.
 - **Sigma names win.** Use Sigma's own field names in emitted JSON. Check the OpenAPI schema (`integration_tests/schema/`) before inventing a field.
 - Fail with `sigma_workbook.fail('macro_name', 'message')` so errors carry the macro name; add a matching `assert_*_rejected` negative test.
 - Dependencies in `ci/` are pinned to versions at least three days old. Keep it that way when refreshing.

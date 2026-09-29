@@ -4,8 +4,7 @@
 
 
 {# Splits `n` items across the 24-column grid as evenly as possible; leftover columns go to the
-   leading items, so 5 items -> 5,5,5,5,4 and 4 items -> 6,6,6,6 (the widths Sigma's own build
-   plugin uses for KPI bands). #}
+   leading items, so 5 items -> 5,5,5,5,4 and 4 items -> 6,6,6,6. #}
 {% macro even_widths(n, columns=24) %}
 {% set base = columns // n %}
 {% set extra = columns % n %}
