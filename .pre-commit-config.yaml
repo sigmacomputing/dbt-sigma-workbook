@@ -1,0 +1,18 @@
+# Local checks that run before every commit. Enable them once per clone:
+#
+#   pip install pre-commit && pre-commit install
+#
+# Run them by hand with `pre-commit run --all-files`.
+repos:
+  - repo: local
+    hooks:
+      # Refuses a commit that contains a real-looking Sigma id, an email address, a non-public Sigma
+      # host or a local path. It scans every tracked file (staged additions included), so it runs on
+      # each commit whatever was touched. CI runs the same test; this catches it before it is committed,
+      # which matters because git history is permanent.
+      - id: no-leaked-ids
+        name: no leaked ids, emails, hosts or local paths
+        entry: python3 scripts/test_no_leaked_ids.py
+        language: system
+        pass_filenames: false
+        always_run: true

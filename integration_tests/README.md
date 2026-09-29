@@ -56,7 +56,7 @@ dbt run-operation assert_workbooks      # structural assertions
 Separately, `python -m unittest discover -s scripts -p "test_*.py"` runs the script tests:
 
 - `test_export_workbooks.py`: the export/push script against a fake Sigma API on localhost (auth, create, dry run, update, legacy endpoints, HTTP errors, refusal to push with problems).
-- `test_no_leaked_ids.py`: scans the tracked files for real-looking ids (only placeholders are allowed), email addresses (only `example.com`), non-public Sigma hosts and local paths, and proves the scanner can find each kind.
+- `test_no_leaked_ids.py`: scans the tracked files for real-looking ids (only placeholders are allowed), email addresses (only `example.com`), non-public Sigma hosts and local paths, and proves the scanner can find each kind. It also runs as a pre-commit hook (`pre-commit install` once per clone), so a leak is stopped before it is committed rather than after.
 - `test_check_golden.py`: the golden comparison (changed values, list order, missing and unexpected files, truncated diffs, `--update`), plus a sanity check of the committed golden files.
 - `test_validate_against_sigma_schema.py`: proves the schema check can fail. It breaks the golden specs (missing required fields, unknown element kind, wrong type, bad enum, bad source kind) and requires the validator to object. Note that the published schema alone accepts a body with no `contents`, because the request is a union that includes the legacy `spec` shape; the export step asserts `contents` for that reason.
 
