@@ -43,12 +43,6 @@
 {% endmacro %}
 
 
-{# `[TABLE/Column]` when `formula` is a plain qualified passthrough reference. #}
-{% macro is_qualified_reference(formula) %}
-{% do return(formula.startswith('[') and formula.endswith(']') and '/' in formula and '(' not in formula and formula.count('[') == 1) %}
-{% endmacro %}
-
-
 {# How `column` (a name exactly as Sigma shows it) is referred to from a column list: qualified with
    the name of what it is read from - the warehouse table, the data model table, or the parent element
    (`[Trips/Minutes]` for a calculated column called Minutes on a table element called Trips). #}

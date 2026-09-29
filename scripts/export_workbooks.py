@@ -16,11 +16,9 @@ Examples
 Pushing needs SIGMA_API_URL (e.g. https://api.sigmacomputing.com), SIGMA_CLIENT_ID and
 SIGMA_CLIENT_SECRET in the environment.
 
-Request shapes (see https://help.sigmacomputing.com/docs/manage-workbooks-as-code):
-    contents  spec  ->  POST /v2/workbooks                  (create; add "dryRun": true to validate only)
-              spec  ->  PUT  /v2/workbooks/{id}/contents    (update, when the spec carries a workbookId)
-    legacy    spec  ->  POST /v2/workbooks/spec             (the deprecated nested-pages shape)
-                        PUT  /v2/workbooks/{id}/spec
+Requests (see https://help.sigmacomputing.com/docs/manage-workbooks-as-code):
+    create  ->  POST /v2/workbooks                (add "dryRun": true to validate without creating)
+    update  ->  PUT  /v2/workbooks/{id}/contents  (when the spec carries a workbookId)
 """
 from __future__ import annotations
 
@@ -60,24 +58,19 @@ def find_problems(name: str, spec: dict) -> list[str]:
             f"{name}: contains an unresolved data model id. Create the data model in Sigma, then record "
             "its id in the `sigma_data_model_ids` project var and re-run `dbt parse`."
         )
-    contents = spec.get("contents")
-    if contents is None:  # legacy nested shape
-        contents = {"pages": spec.get("pages", []), "layout": spec.get("layout", "")}
-        element_lists = [p.get("elements", []) for p in spec.get("pages", [])]
-    else:
-        element_lists = [contents.get("elements", [])]
+    contents = spec.get("contents") or {}
+    elements = contents.get("elements", [])
     if not spec.get("folderId") and not spec.get("workbookId"):
         problems.append(f"{name}: no folderId. Set the `sigma_folder_id` project var (or pass folder_id=).")
     if not contents.get("pages"):
         problems.append(f"{name}: no pages.")
-    ids = [e.get("id") for lst in element_lists for e in lst]
+    ids = [e.get("id") for e in elements]
     if len(ids) != len(set(ids)):
         problems.append(f"{name}: duplicate element ids.")
-    for lst in element_lists:
-        for element in lst:
-            source = element.get("source") or {}
-            if source.get("kind") == "warehouse-table" and not source.get("connectionId"):
-                problems.append(f"{name}: element {element.get('id')} has a warehouse source with no connectionId.")
+    for element in elements:
+        source = element.get("source") or {}
+        if source.get("kind") == "warehouse-table" and not source.get("connectionId"):
+            problems.append(f"{name}: element {element.get('id')} has a warehouse source with no connectionId.")
     return problems
 
 
@@ -134,17 +127,13 @@ class SigmaClient:
         """Create (or, given a workbookId, update) one workbook. Returns Sigma's response."""
         spec = dict(spec)
         workbook_id = spec.pop("workbookId", None)
-        if "contents" in spec:
-            if workbook_id:
-                if dry_run:
-                    raise RuntimeError("--dry-run is only supported when creating a workbook (no workbookId).")
-                return self._request("PUT", f"/v2/workbooks/{workbook_id}/contents", {"contents": spec["contents"]})
-            if dry_run:
-                spec["dryRun"] = True
-            return self._request("POST", "/v2/workbooks", spec)
         if workbook_id:
-            return self._request("PUT", f"/v2/workbooks/{workbook_id}/spec", spec)
-        return self._request("POST", "/v2/workbooks/spec/verify" if dry_run else "/v2/workbooks/spec", spec)
+            if dry_run:
+                raise RuntimeError("--dry-run is only supported when creating a workbook (no workbookId).")
+            return self._request("PUT", f"/v2/workbooks/{workbook_id}/contents", {"contents": spec["contents"]})
+        if dry_run:
+            spec["dryRun"] = True
+        return self._request("POST", "/v2/workbooks", spec)
 
 
 def main(argv: list[str] | None = None) -> int:

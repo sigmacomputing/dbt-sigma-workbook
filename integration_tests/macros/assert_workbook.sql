@@ -262,15 +262,16 @@
   {% endif %}
 {% endfor %}
 
-{# ---- output formats ---- #}
+{# ---- update by workbook_id, and number_range_control ---- #}
 {% set src = sigma_workbook.from_ref('stg_orders') %}
 {% set pages_for_format = [sigma_workbook.page('P', [sigma_workbook.text('hi', key='t')])] %}
-{% set legacy = sigma_workbook.workbook('Legacy', pages_for_format, output='spec') %}
-{% do sigma_workbook_integration_tests._ok(legacy.schemaVersion == 1 and legacy.pages[0].elements | length == 1 and 'contents' not in legacy, "output='spec' nests elements under pages, like the /spec endpoints") %}
-{% do sigma_workbook_integration_tests._ok('<LayoutElement elementId=' in legacy.layout and '<Element ' not in legacy.layout, "output='spec' uses the legacy <LayoutElement> layout tags") %}
-{% do sigma_workbook_integration_tests._ok('<Element elementId=' in dc.layout and '<LayoutElement' not in dc.layout and '<Container elementId=' in dc.layout, "the default output uses <Element>/<Container>, the only tags the current API accepts") %}
 {% set updating = sigma_workbook.workbook('Upd', pages_for_format, workbook_id='abc123') %}
 {% do sigma_workbook_integration_tests._ok(updating.workbookId == 'abc123' and updating.contents.pages | length == 1, 'workbook_id is carried for updates') %}
+
+{% do sigma_workbook_integration_tests._ok('<Element elementId=' in dc.layout and '<LayoutElement' not in dc.layout and '<Container elementId=' in dc.layout, 'the layout uses <Element>/<Container>, the only tags the current API accepts') %}
+{% set nt = sigma_workbook.table(src, ['amount'], name='NT') %}
+{% set nr = sigma_workbook.number_range_control('Amount', targets=[(nt, 'amount')], minimum=1, maximum=9) %}
+{% do sigma_workbook_integration_tests._ok(nr.controlType == 'number-range' and nr.min == 1 and nr.max == 9 and nr.controlId == 'amount-control', 'number_range_control carries its bounds') %}
 
 {# ---- determinism ---- #}
 {% set a = sigma_workbook.simple_dashboard('Det', src, kpis=[{'value': 'Count()'}], charts=[{'type': 'bar', 'x': 'region', 'y': 'Count()', 'name': 'By region'}]) %}

@@ -26,7 +26,7 @@ The first version was built from the help-center examples. Running its output th
 
 | Finding | Cause | Fix |
 | --- | --- | --- |
-| `unknown element <LayoutElement> ... expected Element, Container, or TabbedContainer` | The help-center examples show the *deprecated* `/spec` endpoints' layout vocabulary; `POST /v2/workbooks` wants `<Element>` / `<Container>`. | Layout tags depend on the output format. |
+| `unknown element <LayoutElement> ... expected Element, Container, or TabbedContainer` | The help-center examples show the *deprecated* `/spec` endpoints' layout vocabulary; `POST /v2/workbooks` wants `<Element>` / `<Container>`. | Layout uses `<Element>` / `<Container>`. |
 | `Column '...' is referenced from both 'value' and 'comparison'; a column can only be on one channel at a time` | Columns were shared by formula, so `compare_to='Count()'` reused the value column. | Column ids include a *role* (x, y, color, comparison, hole ...). |
 | `Circular dependency detected` on a control | A control called "Duration" has `controlId` `duration`, the same name a formula uses for the column `[Duration]`. | Default `controlId` is `<name>-control`; `workbook()` rejects a collision. |
 | (not an error) `Sum([NoSuchColumn])` validates | Sigma's dry run does not resolve unqualified references. | Follow Sigma's export convention: an unqualified reference always comes with its qualified passthrough column. |

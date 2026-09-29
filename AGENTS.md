@@ -33,7 +33,7 @@ Live validation against Sigma (needs credentials, creates nothing): `python scri
 - **Every id is a hash of a stable path** (`freeze_id`). Never use timestamps, counters, or `run_started_at`. Column ids include the *role* (channel) because Sigma allows a column on one channel only.
 - **Unqualified formula references** (`Sum([Amount])`) get a qualified passthrough column (`[table/Amount]`) added by `add_column`; that is Sigma's own export convention. Keep it.
 - **Colors are late-bound**: element macros call `color_ref('primary')` (a marker), never `color()` (a hex), so a workbook-level `theme=` reaches them. `workbook()` resolves the markers.
-- **Two output formats**: `contents` (default; `POST /v2/workbooks`, layout tags `<Element>`/`<Container>`) and `spec` (deprecated; nested pages, `<LayoutElement>`/`<GridContainer>`). The current API rejects the legacy tags.
+- **One output format**: the `POST /v2/workbooks` body (`contents`), with layout tags `<Element>`/`<Container>`. The deprecated `/spec` endpoints (nested pages, `<LayoutElement>`/`<GridContainer>`) are deliberately unsupported; the current API rejects their tags.
 - **Sigma names win.** Use Sigma's own field names in emitted JSON. Check the OpenAPI schema (`integration_tests/schema/`) before inventing a field.
 - Fail with `sigma_workbook.fail('macro_name', 'message')` so errors carry the macro name; add a matching `assert_*_rejected` negative test.
 - Dependencies in `ci/` are pinned to versions at least three days old. Keep it that way when refreshing.

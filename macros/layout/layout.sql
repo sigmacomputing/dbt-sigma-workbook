@@ -7,13 +7,9 @@
    anything. Each element's footprint comes from its `w=` / `h=` arguments (every element macro has
    a sensible default).
 
-   The XML vocabulary differs between the two generations of Sigma's API (see `workbook()`):
-
-     contents (POST /v2/workbooks)   <Page> holding <Element> and <Container>
-     spec     (POST /v2/workbooks/spec, deprecated)   <Page> holding <LayoutElement> and <GridContainer>
-
-   The current endpoint rejects the legacy names ("unknown element <LayoutElement> ... expected
-   Element, Container, or TabbedContainer"). #}
+   Tags are `<Element>` and `<Container>`, the only ones `POST /v2/workbooks` accepts; the deprecated
+   `/spec` endpoints' `<LayoutElement>` / `<GridContainer>` are rejected ("unknown element
+   <LayoutElement> ... expected Element, Container, or TabbedContainer").  #}
 
 
 {# Returns {'items': [{'element', 'col', 'row', 'w', 'h'}, ...], 'rows': total_height}. Columns and rows
@@ -41,22 +37,20 @@
 
 
 {# The XML for a list of placed items. Containers nest their children; everything else is a leaf.
-   `indent` is the current nesting depth; `output` selects the tag vocabulary. #}
-{% macro layout_items_xml(items, indent, output) %}
+   `indent` is the current nesting depth. #}
+{% macro layout_items_xml(items, indent) %}
 {% set pad = '  ' * indent %}
-{% set leaf_tag = 'LayoutElement' if output == 'spec' else 'Element' %}
-{% set group_tag = 'GridContainer' if output == 'spec' else 'Container' %}
 {% set lines = [] %}
 {% for item in items %}
   {% set el = item['element'] %}
   {% set position = 'gridColumn="' ~ item['col'] ~ ' / ' ~ (item['col'] + item['w']) ~ '" gridRow="' ~ item['row'] ~ ' / ' ~ (item['row'] + item['h']) ~ '"' %}
   {% if el.get('_children') %}
     {% set inner = sigma_workbook.place(el['_children']) %}
-    {% do lines.append(pad ~ '<' ~ group_tag ~ ' elementId="' ~ el['id'] ~ '" type="grid" ' ~ position ~ ' gridTemplateColumns="repeat(24, 1fr)" gridTemplateRows="auto">') %}
-    {% do lines.append(sigma_workbook.layout_items_xml(inner['items'], indent + 1, output)) %}
-    {% do lines.append(pad ~ '</' ~ group_tag ~ '>') %}
+    {% do lines.append(pad ~ '<Container elementId="' ~ el['id'] ~ '" type="grid" ' ~ position ~ ' gridTemplateColumns="repeat(24, 1fr)" gridTemplateRows="auto">') %}
+    {% do lines.append(sigma_workbook.layout_items_xml(inner['items'], indent + 1)) %}
+    {% do lines.append(pad ~ '</Container>') %}
   {% else %}
-    {% do lines.append(pad ~ '<' ~ leaf_tag ~ ' elementId="' ~ el['id'] ~ '" ' ~ position ~ '/>') %}
+    {% do lines.append(pad ~ '<Element elementId="' ~ el['id'] ~ '" ' ~ position ~ '/>') %}
   {% endif %}
 {% endfor %}
 {% do return(lines | join('\n')) %}
@@ -64,8 +58,8 @@
 
 
 {# One page's <Page> node. #}
-{% macro page_layout_xml(page_id, elements, output) %}
+{% macro page_layout_xml(page_id, elements) %}
 {% set placed = sigma_workbook.place(elements) %}
 {% set header = '<Page type="grid" gridTemplateColumns="repeat(24, 1fr)" gridTemplateRows="auto" id="' ~ page_id ~ '">' %}
-{% do return(header ~ '\n' ~ sigma_workbook.layout_items_xml(placed['items'], 1, output) ~ '\n</Page>') %}
+{% do return(header ~ '\n' ~ sigma_workbook.layout_items_xml(placed['items'], 1) ~ '\n</Page>') %}
 {% endmacro %}

@@ -90,7 +90,6 @@ vars:
 | `sigma_folder_id` | Where the workbook is created. Can also be passed per workbook with `folder_id=`. | To create a workbook (not to update one) |
 | `sigma_data_model_ids` | `{dbt_model_name: sigma_data_model_id}` for [`from_data_model`](#from-a-sigma-data-model). | When reading from data models |
 | `sigma_workbook_theme` | Project-wide [theme](#theming). | No |
-| `sigma_workbook_format` | `contents` (default) or `spec`; see [output format](#output-format). | No |
 
 The names `sigma_connection_id` and `sigma_folder_id` match those used by `dbt-sigma-data-models`, so a project using both configures them once.
 
@@ -318,45 +317,11 @@ python scripts/export_workbooks.py --push                         # create / upd
 
 To **update** a workbook instead of creating another, pass its id: `sigma_workbook.workbook(..., workbook_id='<id>')`. The script then sends `PUT /v2/workbooks/{id}/contents`. Note that Sigma creates a new version of that workbook; hand edits made in Sigma to the same elements are replaced.
 
-You can also skip the script: the exported JSON is the exact body of [`POST /v2/workbooks`](https://help.sigmacomputing.com/reference/createworkbook), so `curl`, `sigcli` or your orchestrator can send it.
-
-### Output format
-
-Sigma's API has two generations of the same representation. The default (`contents`) is the current one; `sigma_workbook_format: spec` (or `workbook(..., output='spec')`) emits the older nested shape used by the deprecated `/v2/workbooks/spec` endpoints and by the help-center examples:
-
-| | `contents` (default) | `spec` |
-| --- | --- | --- |
-| Shape | `{name, folderId, description, contents: {schemaVersion, kind, pages: [{id, name}], elements: [...], settings, layout}}` | `{name, schemaVersion, folderId, pages: [{id, name, elements}], settings, layout}` |
-| Endpoint | `POST /v2/workbooks`, `PUT /v2/workbooks/{id}/contents` | `POST /v2/workbooks/spec`, `PUT /v2/workbooks/{id}/spec` |
-
-The push script picks the right endpoint from the shape. The two also differ in the layout XML vocabulary (`<Element>`/`<Container>` for `contents`, `<LayoutElement>`/`<GridContainer>` for `spec`); the current endpoint rejects the legacy tags, and the package emits the right ones for each.
+You can also skip the script: the exported JSON is the exact body of [`POST /v2/workbooks`](https://help.sigmacomputing.com/reference/createworkbook), so `curl`, `sigcli` or your orchestrator can send it. (The deprecated `/v2/workbooks/spec` endpoints and their nested `pages[].elements` shape are not supported.)
 
 ## Macro reference
 
-Full signatures live in [`macros/schema.yml`](macros/schema.yml). Highlights:
-
-**Assembly**
-
-| Macro | |
-| --- | --- |
-| `workbook(name, pages, theme, folder_id, workbook_id, description, output)` | Validates and assembles the spec. |
-| `page(name, elements)` | A page; `elements` may mix elements and lists of elements. |
-| `materialize(spec, materialized='view')` | Attaches the spec to the model. |
-| `simple_dashboard(name, source, kpis, charts, filters, table_columns, ...)` | The whole dashboard from data. |
-
-**Elements** (all take `source`, `name` / `key`, `w`, `h`, `style`)
-
-| Macro | Key arguments |
-| --- | --- |
-| `table` | `columns`, `sort=[('field','desc')]` |
-| `kpi` | `value`, `format`, `compare_to`, `timeline` + `period`, `trend`, `direction` |
-| `bar_chart` | `x`, `y` (or a list), `color`, `sort_by`, `sort_direction`, `stacking`, `labels`, `horizontal`, `legend` |
-| `line_chart` / `area_chart` | as `bar_chart`, minus `horizontal`; areas add `stacking` |
-| `scatter_chart` | `x`, `y`, `color`, `size` |
-| `pie_chart` / `donut_chart` | `category`, `value`; donut adds `hole_value` |
-| `pivot_table` | `values`, `rows`, `cols` |
-| `text`, `title`, `heading`, `divider` | Non-data elements. |
-| `container` | `elements`, `card` |
+Every public macro, with each argument's type and meaning, is documented in [`macros/schema.yml`](macros/schema.yml); dbt checks that file against the macro signatures. The tables under [Building your own layout](#building-your-own-layout) group the macros by layer.
 
 ## Escape hatches
 
@@ -404,7 +369,7 @@ bash scripts/run_integration_tests_duckdb.sh   # the whole suite; no credentials
 python -m unittest scripts/test_export_workbooks.py
 ```
 
-The integration suite (see [`integration_tests/README.md`](integration_tests/README.md)) seeds a small dataset, builds workbooks of every shape, and checks each compiled spec's structure, cross-references, layout, theme and data-model interop; validates it against Sigma's request schema; exports it; and confirms that 28 kinds of invalid input are rejected with a clear error. Design notes and a critique of the abstraction are in [`docs/design.md`](docs/design.md).
+The integration suite (`integration_tests/README.md` describes what it checks) seeds a small dataset, builds workbooks of every shape, checks each compiled spec's structure, cross-references, layout, theme and data-model interop, validates it against Sigma's request schema, exports it, and confirms that 28 kinds of invalid input are rejected. Design notes and a critique of the abstraction are in [`docs/design.md`](docs/design.md).
 
 ## License
 
