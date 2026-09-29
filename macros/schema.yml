@@ -84,6 +84,12 @@ macros:
       - name: table_name
         type: string
         description: Title of the detail table. Default `Detail`.
+      - name: kpi_h
+        type: int
+        description: Height of the KPI tiles in rows. Default 5; raise it for a scorecard-style page.
+      - name: chart_h
+        type: int
+        description: Common height for the charts in each row. Default is each chart's own height.
 
   # ---------------------------------------------------------------- sources
   - name: from_ref
@@ -884,31 +890,6 @@ macros:
       - name: where
         type: string
         description: Names the caller in error messages. Default `dashboard_page`.
-
-  - name: executive_scorecard
-    description: "A one-page executive scorecard: title -> filters -> 1-5 large KPIs (a KPI with a `timeline` shows a sparkline by default) -> 1-2 trend charts. No detail table; more than five KPIs or two charts is refused (use `simple_dashboard`)."
-    arguments:
-      - name: name
-        type: string
-        description: Workbook and page name.
-      - name: source
-        type: any
-        description: A sigma_workbook source.
-      - name: kpis
-        type: list[any]
-        description: "1 to 5 `{value, name, format, compare_to, timeline, period, trend}` mappings."
-      - name: charts
-        type: list[any]
-        description: "Up to 2 chart mappings, as in `simple_dashboard`. Default `[]`."
-      - name: filters
-        type: list[any]
-        description: "List of `{type, name, column}` mappings. Default `[]`."
-      - name: subtitle
-        type: string
-        description: Muted line under the title.
-      - name: theme
-        type: dict[string,any]
-        description: Per-workbook theme overrides. Default `{}`.
 
   - name: leaderboard
     description: "A ranking dashboard: title -> filters -> KPI band -> one horizontal bar chart per dimension, ranked by `measure` with data labels -> an optional breakdown pivot table."

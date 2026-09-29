@@ -112,9 +112,8 @@
 
      title -> filters -> KPI band -> chart rows -> extra elements -> detail table
 
-   from data alone; the body of `simple_dashboard`, and the building block for `executive_scorecard`
-   and `leaderboard`. `kpis`, `charts`, `filters` and `table_columns` are as in `simple_dashboard`;
-   `extras` are elements you built yourself (a pivot table, a `raw` element), each placed on its own
+   from data alone; the body of `simple_dashboard`, and the building block for `leaderboard`.
+   `kpis`, `charts`, `filters` and `table_columns` are as in `simple_dashboard`; `extras` are elements you built yourself (a pivot table, a `raw` element), each placed on its own
    row and filtered like the rest. `kpi_h` and `chart_h` set the KPI and chart heights;
    `charts_per_row` how many charts share a row. `where` names the caller in error messages.
    Returns the page, ready for `workbook()`. #}
@@ -167,38 +166,15 @@
    list, date_range, text; `table_columns` the detail table's fields (omit for no table). Filters
    are wired to every KPI, chart and the table, so one control narrows the whole page.
 
+   Every part is optional, so leaving out `table_columns` and passing a few KPIs and one or two charts
+   gives a scorecard-style page. For that look, raise `kpi_h` (KPI tile height in rows, default 5) and
+   `chart_h` (common chart height, default each chart's own), and set `trend: true` on KPIs that have
+   a `timeline` for a sparkline.
+
    Every piece is just the primitives from elements/ - `simple_dashboard` is the shortest path to
    something on screen, and a template for writing your own layout. #}
-{% macro simple_dashboard(name, source, kpis=[], charts=[], filters=[], table_columns=none, subtitle=none, theme={}, table_name='Detail') %}
-{% set page = sigma_workbook.dashboard_page(name, source, kpis=kpis, charts=charts, filters=filters, table_columns=table_columns, subtitle=subtitle, table_name=table_name, where='simple_dashboard') %}
-{% do return(sigma_workbook.workbook(name, [page], theme=theme)) %}
-{% endmacro %}
-
-
-{# An executive scorecard: the few numbers leadership scans in seconds.
-
-     title -> filters -> 1-5 large KPIs (with a sparkline when they have a `timeline`) -> 1-2 trend charts
-
-   No detail table on purpose; a scorecard that needs one is a `simple_dashboard`. `kpis` and `charts`
-   are as in `simple_dashboard`, but at most five KPIs and two charts are accepted, and a KPI with a
-   `timeline` shows its trend unless you say `trend: false`. #}
-{% macro executive_scorecard(name, source, kpis, charts=[], filters=[], subtitle=none, theme={}) %}
-{% if not kpis or kpis | length > 5 %}
-  {% do sigma_workbook.fail('executive_scorecard', "give between 1 and 5 kpis (got " ~ (kpis | length) ~ ") - a scorecard is read at a glance. Use simple_dashboard for more.") %}
-{% endif %}
-{% if charts | length > 2 %}
-  {% do sigma_workbook.fail('executive_scorecard', "give at most 2 charts (got " ~ (charts | length) ~ ") - one or two trends sit beside the KPIs. Use simple_dashboard for more.") %}
-{% endif %}
-{% set tiles = [] %}
-{% for k in kpis %}
-  {% set tile = {} %}
-  {% do tile.update(k) %}
-  {% if 'timeline' in k and 'trend' not in k %}
-    {% do tile.update({'trend': true}) %}
-  {% endif %}
-  {% do tiles.append(tile) %}
-{% endfor %}
-{% set page = sigma_workbook.dashboard_page(name, source, kpis=tiles, charts=charts, filters=filters, subtitle=subtitle, kpi_h=7, chart_h=12, where='executive_scorecard') %}
+{% macro simple_dashboard(name, source, kpis=[], charts=[], filters=[], table_columns=none, subtitle=none, theme={}, table_name='Detail', kpi_h=5, chart_h=none) %}
+{% set page = sigma_workbook.dashboard_page(name, source, kpis=kpis, charts=charts, filters=filters, table_columns=table_columns, subtitle=subtitle, table_name=table_name, kpi_h=kpi_h, chart_h=chart_h, where='simple_dashboard') %}
 {% do return(sigma_workbook.workbook(name, [page], theme=theme)) %}
 {% endmacro %}
 

@@ -130,33 +130,8 @@
 {% do sigma_workbook.workbook('W', [sigma_workbook.page('P', [sigma_workbook.text('hi', key='t')])], output='xml') %}
 {% endmacro %}
 
-{% macro assert_scorecard_without_kpis_rejected() %}
-{% do sigma_workbook.executive_scorecard('S', sigma_workbook_integration_tests._src(), kpis=[]) %}
-{% endmacro %}
-
-{% macro assert_scorecard_too_many_kpis_rejected() %}
-{% set kpis = [] %}
-{% for i in range(6) %}
-  {% do kpis.append({'value': 'Count()', 'name': 'K' ~ i}) %}
-{% endfor %}
-{% do sigma_workbook.executive_scorecard('S', sigma_workbook_integration_tests._src(), kpis=kpis) %}
-{% endmacro %}
-
-{% macro assert_scorecard_too_many_charts_rejected() %}
-{% set charts = [] %}
-{% for i in range(3) %}
-  {% do charts.append({'type': 'bar', 'x': 'region', 'y': 'Count()', 'name': 'C' ~ i}) %}
-{% endfor %}
-{% do sigma_workbook.executive_scorecard('S', sigma_workbook_integration_tests._src(), kpis=[{'value': 'Count()'}], charts=charts) %}
-{% endmacro %}
-
 {% macro assert_leaderboard_without_dimensions_rejected() %}
 {% do sigma_workbook.leaderboard('L', sigma_workbook_integration_tests._src(), dimensions=[], measure='Count()') %}
-{% endmacro %}
-
-{% macro assert_scorecard_unknown_chart_type_rejected() %}
-{# the error must name the composite the user called, not claim it came from simple_dashboard #}
-{% do sigma_workbook.executive_scorecard('S', sigma_workbook_integration_tests._src(), kpis=[{'value': 'Count()'}], charts=[{'type': 'radar'}]) %}
 {% endmacro %}
 
 {% macro assert_malformed_field_rejected() %}

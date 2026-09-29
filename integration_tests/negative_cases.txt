@@ -35,8 +35,4 @@ assert_extend_foreign_element_rejected | sigma_workbook.extend: expected an elem
 assert_raw_without_key_rejected | sigma_workbook.raw: set `name=` or `key=`
 assert_raw_private_key_rejected | sigma_workbook.raw: '_w' can't be set
 assert_bad_output_format_rejected | sigma_workbook.workbook: output must be 'contents' or 'spec', got 'xml'
-assert_scorecard_without_kpis_rejected | sigma_workbook.executive_scorecard: give between 1 and 5 kpis (got 0)
-assert_scorecard_too_many_kpis_rejected | sigma_workbook.executive_scorecard: give between 1 and 5 kpis (got 6)
-assert_scorecard_too_many_charts_rejected | sigma_workbook.executive_scorecard: give at most 2 charts (got 3)
 assert_leaderboard_without_dimensions_rejected | sigma_workbook.leaderboard: dimensions is required
-assert_scorecard_unknown_chart_type_rejected | sigma_workbook.executive_scorecard: unknown chart type 'radar'

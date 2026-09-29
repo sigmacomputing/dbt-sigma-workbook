@@ -182,7 +182,7 @@
     {% do discovered.append(node.name) %}
   {% endif %}
 {% endfor %}
-{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model', 'sigma_scorecard', 'sigma_leaderboard'] %}
+{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model', 'sigma_leaderboard'] %}
   {% do sigma_workbook_integration_tests._ok(required in discovered, 'workbook model ' ~ required ~ ' was discovered in the graph (found ' ~ discovered ~ ')') %}
 {% endfor %}
 {% for model_name in discovered %}
@@ -234,19 +234,18 @@
 {% set donut = sigma_workbook_integration_tests._find(dc.elements, 'donut-chart', none) %}
 {% do sigma_workbook_integration_tests._ok(donut.id in breakdown_xml and line.id not in breakdown_xml, 'layout puts each element on the right page') %}
 
-{# ---- executive scorecard: few large KPIs, sparkline by default, trends, no table ---- #}
-{% set sc = sigma_workbook_integration_tests._spec_of('sigma_scorecard').contents %}
-{% set sc_kinds = sc.elements | map(attribute='kind') | list %}
-{% set sc_kpis = sc.elements | selectattr('kind', 'equalto', 'kpi-chart') | list %}
-{% do sigma_workbook_integration_tests._ok(sc_kpis | length == 3 and sc.pages | length == 1, 'the scorecard has three KPIs on one page') %}
-{% do sigma_workbook_integration_tests._ok('table' not in sc_kinds and 'pivot-table' not in sc_kinds, 'a scorecard has no detail table or pivot') %}
-{% do sigma_workbook_integration_tests._ok((sc.elements | selectattr('kind', 'in', ['line-chart', 'bar-chart']) | list) | length == 2, 'the scorecard has its two trend charts') %}
-{% set sc_orders = sigma_workbook_integration_tests._find(sc.elements, 'kpi-chart', 'Count') %}
-{% set sc_average = sigma_workbook_integration_tests._find(sc.elements, 'kpi-chart', 'Average') %}
-{% do sigma_workbook_integration_tests._ok(sc_orders.trend.shape == 'area' and sc_orders.timeline.columnId, 'a scorecard KPI with a timeline shows its sparkline without asking') %}
-{% do sigma_workbook_integration_tests._ok('trend' not in sc_average and 'timeline' not in sc_average, 'a scorecard KPI without a timeline gets no sparkline') %}
-{% set sc_control = sc.elements | selectattr('kind', 'equalto', 'control') | first %}
-{% do sigma_workbook_integration_tests._ok(sc_control.controlType == 'date-range' and sc_control.filters | length == 5, 'the scorecard date filter is wired to every KPI and chart') %}
+{# ---- simple_dashboard sizing: kpi_h / chart_h give a scorecard-style page (big tiles, no table) ---- #}
+{% set tall_kpis = [{'value': 'Count()', 'name': 'Count', 'timeline': 'order_date', 'trend': true}] %}
+{% set tall_charts = [{'type': 'bar', 'x': 'region', 'y': 'Count()', 'name': 'By region'}] %}
+{% set orders_src = sigma_workbook.from_ref('stg_orders') %}
+{% set default_size = sigma_workbook.simple_dashboard('Sized', orders_src, kpis=tall_kpis, charts=tall_charts) %}
+{% set tall = sigma_workbook.simple_dashboard('Sized', orders_src, kpis=tall_kpis, charts=tall_charts, kpi_h=7, chart_h=12) %}
+{% do sigma_workbook_integration_tests._ok('gridRow="1 / 6"' in default_size.contents.layout and 'gridRow="1 / 15"' in default_size.contents.layout, 'by default KPI tiles are 5 rows and charts 14 rows tall') %}
+{% do sigma_workbook_integration_tests._ok('gridRow="1 / 8"' in tall.contents.layout and 'gridRow="1 / 13"' in tall.contents.layout, 'kpi_h=7 and chart_h=12 reach the layout') %}
+{% do sigma_workbook_integration_tests._ok('gridRow="1 / 6"' not in tall.contents.layout and 'gridRow="1 / 15"' not in tall.contents.layout, 'the default sizes are fully replaced, not added to') %}
+{% set tall_kinds = tall.contents.elements | map(attribute='kind') | list %}
+{% do sigma_workbook_integration_tests._ok('table' not in tall_kinds, 'no table_columns, no detail table') %}
+{% do sigma_workbook_integration_tests._ok(sigma_workbook_integration_tests._find(tall.contents.elements, 'kpi-chart', 'Count').trend.shape == 'area', 'trend: true on a KPI with a timeline shows a sparkline') %}
 
 {# ---- leaderboard: one ranked horizontal bar chart per dimension, plus a breakdown pivot ---- #}
 {% set lb = sigma_workbook_integration_tests._spec_of('sigma_leaderboard').contents %}
@@ -259,11 +258,9 @@
 {% set lb_control = lb.elements | selectattr('kind', 'equalto', 'control') | first %}
 {% do sigma_workbook_integration_tests._ok(lb_control.filters | length == 4, 'the leaderboard filter is wired to the KPI, both charts and the pivot') %}
 
-{# ---- both are generic: nothing in them knows about the sample orders table ---- #}
+{# ---- generic: nothing in the leaderboard knows about the sample orders table ---- #}
 {% set standings = sigma_workbook.leaderboard('Team standings', sigma_workbook.from_ref('stg_orders'), dimensions=['team_name'], measure='Sum([Points])', measure_name='Points') %}
 {% do sigma_workbook_integration_tests._find(standings.contents.elements, 'bar-chart', 'Points by Team Name') %}
-{% set one_kpi = sigma_workbook.executive_scorecard('Uptime', sigma_workbook.from_ref('stg_orders'), kpis=[{'value': 'Avg([Uptime])', 'name': 'Availability'}]) %}
-{% do sigma_workbook_integration_tests._ok((one_kpi.contents.elements | selectattr('kind', 'equalto', 'kpi-chart') | list) | length == 1 and one_kpi.contents.elements | selectattr('kind', 'in', ['line-chart', 'bar-chart', 'table']) | list | length == 0, 'a scorecard can be a single KPI with no charts, filters or table') %}
 
 {# ---- theme: project var + per-workbook override + Sigma-blue default ---- #}
 {% do sigma_workbook_integration_tests._ok(dc.settings.theme.overrides.colors.highlight == '#1A70F1', 'default primary is Sigma blue') %}

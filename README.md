@@ -84,23 +84,26 @@ Pair the model with an `exposures:` entry so `dbt ls -s +exposure:sales_dashboar
 
 ## Dashboard styles
 
-`simple_dashboard` is one shape. Two more are built from the same pieces and take the same `kpis` / `charts` / `filters` mappings. Both are generic: they know nothing about your data, only which fields and measures you point them at.
+`simple_dashboard` is the general-purpose shape; `leaderboard` is a second one built from the same pieces. Both take the same `kpis` / `charts` / `filters` mappings and are generic: they know nothing about your data, only which fields and measures you point them at.
 
 | Composite | Shape | Use it for |
 | --- | --- | --- |
-| `simple_dashboard` | title, filters, KPI band, chart pairs, detail table | a general-purpose first dashboard |
-| `executive_scorecard` | 1-5 large KPIs (a sparkline for any with a `timeline`), 1-2 trend charts, no table | the few numbers scanned at a glance; more than 5 KPIs or 2 charts is refused |
+| `simple_dashboard` | title, filters, KPI band, chart pairs, detail table | a first dashboard; every part is optional |
 | `leaderboard` | KPI band, one ranked horizontal bar chart per dimension, optional breakdown pivot | who is on top, by any measure: teams, products, regions, accounts |
 
+**A scorecard is a `simple_dashboard`** with a few KPIs and one or two charts, no `table_columns`, taller tiles and sparklines: `kpi_h=7` and `chart_h=12` resize them, and `trend: true` on a KPI with a `timeline` adds the sparkline.
+
 ```sql
-{% set spec = sigma_workbook.executive_scorecard(
+{% set spec = sigma_workbook.simple_dashboard(
     name='Support scorecard',
     source=sigma_workbook.from_ref('tickets'),
     kpis=[
-      {'value': 'CountDistinct([Ticket Id])', 'name': 'Tickets', 'timeline': 'created_at'},
+      {'value': 'CountDistinct([Ticket Id])', 'name': 'Tickets', 'timeline': 'created_at', 'trend': true},
       {'value': 'Avg([Hours To Resolve])', 'name': 'Time to resolve', 'direction': 'lower'},
     ],
     charts=[{'type': 'line', 'x': 'DateTrunc("week", [Created At])', 'y': 'Count()', 'name': 'Tickets by week'}],
+    kpi_h=7,
+    chart_h=12,
 ) %}
 
 {% set spec = sigma_workbook.leaderboard(
@@ -112,7 +115,7 @@ Pair the model with an `exposures:` entry so `dbt ls -s +exposure:sales_dashboar
 ) %}
 ```
 
-Both are thin layers over `dashboard_page`, which is public: call it directly to build a page in one of these layouts and mix it with hand-built pages in a `workbook()`. Runnable versions of each are in [`integration_tests/models/`](integration_tests/models).
+`leaderboard` is a thin layer over `dashboard_page`, which is public: call it directly to build a page in the `simple_dashboard` layout and mix it with hand-built pages in a `workbook()`. A runnable leaderboard is in [`integration_tests/models/`](integration_tests/models).
 
 ## Building your own layout
 
@@ -164,7 +167,7 @@ Building blocks, smallest to largest:
 | **Fields** | `field`, `format_number`, `format_currency`, `format_percent`, `format_date`, `format` |
 | **Elements** | `table`, `kpi`, `bar_chart`, `line_chart`, `area_chart`, `scatter_chart`, `pie_chart`, `donut_chart`, `pivot_table`, `text`, `title`, `heading`, `divider`, `container` |
 | **Controls** | `list_control`, `date_range_control`, `text_control`, `number_range_control` |
-| **Composites** | `row`, `kpi_row`, `dashboard_header`, `dashboard_page`, `simple_dashboard`, `executive_scorecard`, `leaderboard` |
+| **Composites** | `row`, `kpi_row`, `dashboard_header`, `dashboard_page`, `simple_dashboard`, `leaderboard` |
 | **Assembly** | `page`, `workbook`, `materialize` |
 | **Escape hatches** | `extend`, `raw` |
 
@@ -333,8 +336,7 @@ Full signatures are in [`macros/schema.yml`](macros/schema.yml). Highlights:
 | `workbook(name, pages, theme, folder_id, workbook_id, description, output)` | Validates and assembles the spec. |
 | `page(name, elements)` | `elements` may mix elements and lists of elements. |
 | `materialize(spec, materialized='view')` | Attaches the spec to the model. |
-| `simple_dashboard(name, source, kpis, charts, filters, table_columns, ...)` | A whole dashboard from data. |
-| `executive_scorecard(name, source, kpis, charts, filters, ...)` | 1-5 large KPIs and 1-2 trend charts. |
+| `simple_dashboard(name, source, kpis, charts, filters, table_columns, kpi_h, chart_h, ...)` | A whole dashboard from data. |
 | `leaderboard(name, source, dimensions, measure, kpis, detail_measures, filters, ...)` | Ranked horizontal bars per dimension, plus a breakdown pivot. |
 | `dashboard_page(name, source, kpis, charts, filters, table_columns, extras, ...)` | One such page, for mixing into your own `workbook()`. |
 
