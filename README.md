@@ -43,7 +43,7 @@ Not on the dbt Hub yet; install from git in `packages.yml`:
 
 ```yaml
 packages:
-  - git: "https://github.com/mattsenicksigma/dbt-sigma-workbook.git"
+  - git: "https://github.com/Matts52/dbt-sigma-workbook.git"
     revision: main            # pin a tag or commit for reproducible builds
 ```
 
