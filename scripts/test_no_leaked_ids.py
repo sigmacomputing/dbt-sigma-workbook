@@ -74,6 +74,16 @@ def find_leaks(root: Path) -> list[str]:
     return leaks
 
 
+# Deliberately fake leaks for the scanner tests. They are assembled at run time, because this file is
+# itself scanned: a literal fake id, address or path here would be reported as a real one.
+FAKE_ID = "-".join(["0a1b2c3d", "4e5f", "4a6b", "8c7d", "9e0f1a2b3c4d"])
+LONG_PLACEHOLDER_ID = "-".join(["00000000", "0000", "0000", "0000", "000000123456"])
+FAKE_EMAIL = "someone" + "@" + "corp.io"
+FAKE_SIGMA_HOST = "internal-tools" + ".sigmacomputing" + ".com"
+FAKE_MAC_PATH = "/" + "Users/someone/repos/x"
+FAKE_LINUX_PATH = "/" + "home/someone/x"
+
+
 class ScannerFindsLeaks(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
@@ -85,33 +95,33 @@ class ScannerFindsLeaks(unittest.TestCase):
         return find_leaks(self.root)
 
     def test_a_real_looking_uuid_is_a_leak(self):
-        (leak,) = self.scan("a.yml", "folder: 0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d\n")
+        (leak,) = self.scan("a.yml", f"folder: {FAKE_ID}\n")
         self.assertIn("a.yml:1", leak)
 
     def test_placeholder_uuids_are_allowed(self):
         self.assertEqual(self.scan("a.yml", "id: 00000000-0000-0000-0000-000000000001\nid: 00000000-0000-0000-0000-0000000000ab\n"), [])
 
     def test_only_two_digit_placeholder_suffixes_are_allowed(self):
-        self.assertEqual(len(self.scan("a.yml", "id: 00000000-0000-0000-0000-000000123456\n")), 1)
+        self.assertEqual(len(self.scan("a.yml", f"id: {LONG_PLACEHOLDER_ID}\n")), 1)
 
     def test_email_addresses_are_a_leak_unless_example_com(self):
-        self.assertEqual(len(self.scan("a.md", "contact someone@corp.io\n")), 1)
+        self.assertEqual(len(self.scan("a.md", f"contact {FAKE_EMAIL}\n")), 1)
         self.assertEqual(self.scan("a.md", "contact data@example.com\n"), [])
 
     def test_non_public_sigma_hosts_are_a_leak(self):
-        self.assertEqual(len(self.scan("a.md", "see https://internal-tools.sigmacomputing.com/x\n")), 1)
+        self.assertEqual(len(self.scan("a.md", f"see https://{FAKE_SIGMA_HOST}/x\n")), 1)
         self.assertEqual(self.scan("a.md", "see https://help.sigmacomputing.com/docs and https://api.sigmacomputing.com\n"), [])
 
     def test_mac_local_paths_are_a_leak(self):
-        self.assertEqual(len(self.scan("a.md", "at /Users/someone/repos/x\n")), 1)
+        self.assertEqual(len(self.scan("a.md", f"at {FAKE_MAC_PATH}\n")), 1)
 
     def test_linux_local_paths_are_a_leak(self):
-        self.assertEqual(len(self.scan("a.md", "at /home/someone/x\n")), 1)
+        self.assertEqual(len(self.scan("a.md", f"at {FAKE_LINUX_PATH}\n")), 1)
 
     def test_untracked_files_are_not_scanned_in_a_git_checkout(self):
         subprocess.run(["git", "init", "-q"], cwd=self.root, check=True)
         (self.root / "tracked.md").write_text("fine\n")
-        (self.root / "ignored.md").write_text("0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d\n")
+        (self.root / "ignored.md").write_text(FAKE_ID + "\n")
         subprocess.run(["git", "add", "tracked.md"], cwd=self.root, check=True)
         self.assertEqual(find_leaks(self.root), [])
         subprocess.run(["git", "add", "ignored.md"], cwd=self.root, check=True)
@@ -119,7 +129,7 @@ class ScannerFindsLeaks(unittest.TestCase):
 
     def test_skipped_directories_and_binary_files_are_ignored(self):
         (self.root / "target").mkdir()
-        (self.root / "target" / "manifest.json").write_text("0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d")
+        (self.root / "target" / "manifest.json").write_text(FAKE_ID)
         (self.root / "schema.json.gz").write_bytes(b"\x1f\x8b\x08")
         self.assertEqual(find_leaks(self.root), [])
 
