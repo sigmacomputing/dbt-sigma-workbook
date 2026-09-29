@@ -42,6 +42,26 @@ class GoldenTest(unittest.TestCase):
         self.write(self.expected, "a", {"pages": [2, 1]})
         self.assertEqual(len(cg.compare(self.actual, self.expected)), 1)
 
+    def test_connection_ids_are_not_part_of_the_snapshot(self):
+        source = lambda cid: {"elements": [{"source": {"kind": "warehouse-table", "connectionId": cid, "path": ["a", "b", "c"]}}]}
+        self.write(self.actual, "a", source("real-connection"))
+        self.write(self.expected, "a", source("some-other-connection"))
+        self.assertEqual(cg.compare(self.actual, self.expected), [])
+
+    def test_other_environment_values_are_still_compared(self):
+        self.write(self.actual, "a", {"folderId": "folder-1", "source": {"connectionId": "x"}})
+        self.write(self.expected, "a", {"folderId": "folder-2", "source": {"connectionId": "y"}})
+        (problem,) = cg.compare(self.actual, self.expected)
+        self.assertIn("folder-1", problem)
+        self.assertNotIn("connectionId", "".join(line for line in problem.splitlines() if line[:1] in "+-"))
+
+    def test_update_stores_the_placeholder_not_the_real_connection_id(self):
+        self.write(self.actual, "a", {"source": {"connectionId": "real-connection"}, "list": [{"connectionId": "real-connection"}]})
+        cg.update(self.actual, self.expected)
+        written = (self.expected / "a.json").read_text()
+        self.assertNotIn("real-connection", written)
+        self.assertEqual(written.count("<connectionId>"), 2)
+
     def test_new_and_removed_workbooks_are_reported(self):
         self.write(self.actual, "new", {})
         self.write(self.expected, "gone", {})
@@ -92,6 +112,23 @@ class CommittedGoldenFiles(unittest.TestCase):
             self.assertTrue(spec["name"] and spec["folderId"], path.name)
             self.assertTrue(contents["pages"] and contents["elements"] and contents["layout"], path.name)
             self.assertNotIn("/Users/", path.read_text(), f"{path.name} leaks a local path")
+
+    def test_golden_files_hold_no_real_connection_id(self):
+        for path in sorted(cg.DEFAULT_EXPECTED.glob("*.json")):
+            found = set()
+
+            def walk(node):
+                if isinstance(node, dict):
+                    for key, value in node.items():
+                        if key == "connectionId":
+                            found.add(value)
+                        walk(value)
+                elif isinstance(node, list):
+                    for item in node:
+                        walk(item)
+
+            walk(json.loads(path.read_text()))
+            self.assertLessEqual(found, {"<connectionId>"}, f"{path.name} holds a real connection id: {found}")
 
 
 if __name__ == "__main__":
