@@ -1,0 +1,26 @@
+name: 'sigma_workbook_integration_tests'
+version: '1.0.0'
+config-version: 2
+profile: 'sigma_workbook_integration_tests'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+flags:
+  # Ask dbt to check macros/schema.yml against the real macro signatures - the strictness dbt 2.x
+  # applies by default. Warnings are promoted to errors in CI (--warn-error).
+  validate_macro_args: true
+
+vars:
+  sigma_connection_id: 17edf046-9636-4d9b-a13f-d034bec2d600
+  sigma_folder_id: e7c79c61-94d4-458e-ab4c-f581a4c04a4c
+  # Recorded after the data model was first created in Sigma (see README -> "Data models").
+  sigma_data_model_ids:
+    sigma_sales_model: 5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f
+  # Re-skin every workbook: only the keys listed here change, the rest keep the package defaults.
+  sigma_workbook_theme:
+    colors:
+      primary: "#1A70F1"

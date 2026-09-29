@@ -1,0 +1,12 @@
+# Pinned CI environment for dbt 2.x (the Rust-based dbt engine, published to PyPI as dbt-core 2.x)
+# plus jsonschema for scripts/validate_against_sigma_schema.py. Needs Python >= 3.11.
+# Every version here was published at least 3 days before it was pinned.
+dbt-core==2.0.0rc8
+mashumaro==3.22
+msgpack==1.2.2
+typing-extensions==4.16.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+referencing==0.37.0
+rpds-py==2026.6.3
+attrs==26.1.0

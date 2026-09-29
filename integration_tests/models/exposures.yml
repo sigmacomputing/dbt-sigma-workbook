@@ -1,0 +1,13 @@
+version: 2
+
+exposures:
+  - name: sales_dashboard
+    type: dashboard
+    maturity: high
+    url: https://app.sigmacomputing.com/
+    owner:
+      name: Data Team
+      email: data@example.com
+    depends_on:
+      - ref('stg_orders')
+      - ref('sigma_sales_dashboard')

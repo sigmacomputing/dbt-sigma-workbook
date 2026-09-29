@@ -1,0 +1,21 @@
+sigma_workbook_integration_tests:
+  target: duckdb
+  outputs:
+    duckdb:
+      type: duckdb
+      path: "../duckdb/integration_tests.duckdb"
+      schema: main
+      threads: 1
+
+    # Documents the warehouse family this package is written for in production. Never used in CI:
+    # the macros only compose JSON, so no adapter-specific SQL is involved.
+    snowflake:
+      type: snowflake
+      account: dummy_account
+      user: dummy_user
+      password: dummy_password
+      role: dummy_role
+      database: dummy_database
+      warehouse: dummy_warehouse
+      schema: dummy_schema
+      threads: 1

@@ -1,0 +1,9 @@
+order_id,order_date,region,segment,amount,target_amount
+1,2026-01-05,West,Enterprise,1200.50,1000
+2,2026-01-19,East,SMB,310.00,400
+3,2026-02-02,West,SMB,455.25,400
+4,2026-02-14,South,Enterprise,2100.00,2000
+5,2026-03-03,East,Enterprise,980.75,1000
+6,2026-03-21,South,SMB,120.00,200
+7,2026-04-08,West,Enterprise,1730.10,1500
+8,2026-04-27,East,SMB,265.40,300
