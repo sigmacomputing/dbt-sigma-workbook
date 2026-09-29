@@ -126,6 +126,10 @@
 {% do sigma_workbook.raw('button', 'b', {'_w': 99}) %}
 {% endmacro %}
 
+{% macro assert_bad_output_format_rejected() %}
+{% do sigma_workbook.workbook('W', [sigma_workbook.page('P', [sigma_workbook.text('hi', key='t')])], output='xml') %}
+{% endmacro %}
+
 {% macro assert_malformed_field_rejected() %}
 {% do sigma_workbook.table(sigma_workbook_integration_tests._src(), [{'name': 'no formula'}], name='T') %}
 {% endmacro %}

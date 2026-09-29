@@ -174,7 +174,18 @@
 
 {% macro assert_workbooks() %}
 
-{% for model_name in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model'] %}
+{# every model carrying a workbook spec gets the structural checks, so a new workbook model is covered
+   without touching this file; the three named ones must be among them so none can silently vanish #}
+{% set discovered = [] %}
+{% for node in graph.nodes.values() %}
+  {% if node.resource_type == 'model' and node.config.meta.get('sigma_workbook') %}
+    {% do discovered.append(node.name) %}
+  {% endif %}
+{% endfor %}
+{% for required in ['sigma_sales_dashboard', 'sigma_sales_simple', 'sigma_sales_from_data_model'] %}
+  {% do sigma_workbook_integration_tests._ok(required in discovered, 'workbook model ' ~ required ~ ' was discovered in the graph (found ' ~ discovered ~ ')') %}
+{% endfor %}
+{% for model_name in discovered %}
   {% do sigma_workbook_integration_tests._check_workbook(model_name) %}
   {{ log('shape ok: ' ~ model_name, info=true) }}
 {% endfor %}

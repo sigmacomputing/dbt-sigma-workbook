@@ -1,0 +1,190 @@
+{
+  "name": "Sales from the data model",
+  "contents": {
+    "schemaVersion": 1,
+    "kind": "workbook",
+    "pages": [
+      {
+        "id": "1dd857e3b1",
+        "name": "Overview"
+      }
+    ],
+    "elements": [
+      {
+        "id": "f98674d911",
+        "kind": "text",
+        "body": "# Sales (governed)\n\n<span style=\"color: #737373\">Reads the Sales Model data model</span>",
+        "verticalAlign": "center"
+      },
+      {
+        "id": "c675feb435",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "83464a9bf5",
+        "kind": "kpi-chart",
+        "source": {
+          "kind": "data-model",
+          "dataModelId": "5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f",
+          "elementId": "3000ebe5c91958b1155f843a41b9d2e6"
+        },
+        "columns": [
+          {
+            "id": "7ddf1254f5",
+            "formula": "Sum([Amount])",
+            "format": {
+              "kind": "number",
+              "formatString": "$.0f",
+              "decimalSymbol": ".",
+              "digitGroupingSymbol": ",",
+              "digitGroupingSize": [
+                3
+              ],
+              "currencySymbol": "$"
+            }
+          },
+          {
+            "id": "37719f075c",
+            "formula": "[Orders/Amount]"
+          }
+        ],
+        "value": {
+          "columnId": "7ddf1254f5",
+          "color": "#0a0a0a",
+          "fontWeight": "bold"
+        },
+        "name": {
+          "text": "Revenue",
+          "color": "#737373",
+          "fontWeight": "normal",
+          "fontSize": 14
+        },
+        "layout": {
+          "anchor": "left",
+          "verticalAnchor": "top"
+        },
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "e23575c8c7",
+        "kind": "kpi-chart",
+        "source": {
+          "kind": "data-model",
+          "dataModelId": "5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f",
+          "elementId": "3000ebe5c91958b1155f843a41b9d2e6"
+        },
+        "columns": [
+          {
+            "id": "b2298da3c5",
+            "formula": "Count()"
+          }
+        ],
+        "value": {
+          "columnId": "b2298da3c5",
+          "color": "#0a0a0a",
+          "fontWeight": "bold"
+        },
+        "name": {
+          "text": "Orders",
+          "color": "#737373",
+          "fontWeight": "normal",
+          "fontSize": 14
+        },
+        "layout": {
+          "anchor": "left",
+          "verticalAnchor": "top"
+        },
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "f30a28e7de",
+        "kind": "bar-chart",
+        "source": {
+          "kind": "data-model",
+          "dataModelId": "5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f",
+          "elementId": "3000ebe5c91958b1155f843a41b9d2e6"
+        },
+        "columns": [
+          {
+            "id": "7a8eca2976",
+            "formula": "[Orders/Region]"
+          },
+          {
+            "id": "c3b2ec513c",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "db03982d34",
+            "formula": "[Orders/Amount]"
+          }
+        ],
+        "xAxis": {
+          "columnId": "7a8eca2976",
+          "sort": {
+            "by": "c3b2ec513c",
+            "direction": "descending"
+          }
+        },
+        "yAxis": {
+          "columnIds": [
+            "c3b2ec513c"
+          ]
+        },
+        "color": {
+          "by": "single",
+          "value": "#7008e7"
+        },
+        "name": "Revenue by region",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      }
+    ],
+    "settings": {
+      "theme": {
+        "name": "Light",
+        "overrides": {
+          "colors": {
+            "text": "#0a0a0a",
+            "highlight": "#7008e7",
+            "surface": "#ffffff",
+            "success": "#008236",
+            "warning": "#bb4d00",
+            "danger": "#c10007"
+          },
+          "categoricalScheme": [
+            "#7008e7",
+            "#1A70F1",
+            "#00786f"
+          ],
+          "colorOverrides": [
+            {
+              "name": "backgroundCanvas",
+              "color": "#fafafa"
+            }
+          ],
+          "pageWidth": "large"
+        }
+      }
+    },
+    "layout": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Page type=\"grid\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\" id=\"1dd857e3b1\">\n  <Element elementId=\"f98674d911\" gridColumn=\"1 / 25\" gridRow=\"1 / 4\"/>\n  <Container elementId=\"c675feb435\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"4 / 9\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"83464a9bf5\" gridColumn=\"1 / 13\" gridRow=\"1 / 6\"/>\n    <Element elementId=\"e23575c8c7\" gridColumn=\"13 / 25\" gridRow=\"1 / 6\"/>\n  </Container>\n  <Element elementId=\"f30a28e7de\" gridColumn=\"1 / 25\" gridRow=\"9 / 23\"/>\n</Page>\n"
+  },
+  "folderId": "e7c79c61-94d4-458e-ab4c-f581a4c04a4c"
+}

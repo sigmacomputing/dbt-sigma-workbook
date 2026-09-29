@@ -13,7 +13,7 @@ Read `README.md` for usage and `docs/design.md` for the reasoning, the composabi
 ```bash
 pip install -r ci/requirements-dbt1.txt        # dbt 1.x;  ci/requirements-dbt2.txt for dbt 2.x
 bash scripts/run_integration_tests_duckdb.sh   # the whole suite (DuckDB, no credentials)
-python -m unittest scripts/test_export_workbooks.py
+python -m unittest discover -s scripts -p "test_*.py"
 ```
 
 The script honors `DBT`, `PYTHON` and `PARSE_FLAGS`. CI runs it on dbt 1.x (with `PARSE_FLAGS=--warn-error`) and on dbt 2.x. **Both must pass**; dbt 2.x is the stricter of the two.
@@ -24,7 +24,7 @@ Live validation against Sigma (needs credentials, creates nothing): `python scri
 
 - `macros/core` ids, string/dict helpers, `fail()`. `macros/theme` design tokens + late-bound colors. `macros/data` sources, fields, formats. `macros/elements` one file per element family, plus `control`, `escape_hatches`. `macros/layout` grid placement + XML. `macros/workbook` `page`/`workbook`/`materialize`. `macros/components` composites and `simple_dashboard`.
 - `macros/schema.yml` documents every public macro. **dbt validates it against the signatures** (`validate_macro_args`); adding, renaming or removing an argument means updating it, or the build fails.
-- `integration_tests/` is a real dbt project (`packages.yml: local: ../`). `assert_workbook.sql` = positive assertions, `assert_rejected.sql` = expected compile errors (listed in the test script).
+- `integration_tests/` is a real dbt project (`packages.yml: local: ../`). `assert_workbook.sql` = positive assertions, `assert_rejected.sql` = expected compile errors, each listed in `negative_cases.txt` with the message it must raise (the script checks the two agree). `expected/*.json` = golden copies of every compiled workbook; after an intended change to emitted JSON, run `UPDATE_GOLDEN=1 bash scripts/run_integration_tests_duckdb.sh` and review the diff.
 
 ## Conventions and gotchas
 
