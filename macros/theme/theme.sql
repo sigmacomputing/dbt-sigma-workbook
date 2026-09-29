@@ -2,7 +2,7 @@
    instead of hard-coding a hex, so one project var re-skins every workbook.
 
    Precedence, lowest to highest:
-     1. these defaults (Sigma Blue + a neutral gray scale, borrowed from Sigma's own build plugin)
+     1. these defaults (Sigma Blue + a neutral gray scale)
      2. the `sigma_workbook_theme` project var (dbt_project.yml -> vars)
      3. the `theme=` argument of `sigma_workbook.workbook()`
 

@@ -127,13 +127,15 @@ done < "$CASES"
 echo "  $CASE_COUNT negative cases passed."
 
 echo ""
-echo "7. Re-running the assertions with a different sigma_connection_id..."
-# The connection id is a project var (integration_tests/dbt_project.yml, or SIGMA_CONNECTION_ID). The
-# assertions compare every warehouse source with var('sigma_connection_id'), so they only pass under an
-# override if the id flows from the var and is not baked into the macros or the tests.
-$DBT run-operation assert_workbooks --vars "{sigma_connection_id: connection-id-from-a-vars-override}" > "$LOG" 2>&1 || { cat "$LOG"; exit 1; }
+echo "7. Re-running the assertions with different Sigma ids..."
+# The connection, folder and data model ids are project vars (integration_tests/dbt_project.yml, or the
+# SIGMA_CONNECTION_ID / SIGMA_FOLDER_ID / SIGMA_DATA_MODEL_ID environment variables). The assertions
+# compare the compiled specs with those vars, so they only pass under an override if every id flows
+# from the vars and none is baked into the macros or the tests.
+OVERRIDE="{sigma_connection_id: connection-from-a-vars-override, sigma_folder_id: folder-from-a-vars-override, sigma_data_model_ids: {sigma_sales_model: data-model-from-a-vars-override}}"
+$DBT run-operation assert_workbooks --vars "$OVERRIDE" > "$LOG" 2>&1 || { cat "$LOG"; exit 1; }
 grep -q "all assertions passed" "$LOG" || { echo "assert_workbooks did not report success under the override:"; cat "$LOG"; exit 1; }
-echo "  assertions passed with sigma_connection_id overridden."
+echo "  assertions passed with the connection, folder and data model ids overridden."
 
 echo ""
 echo "=== All tests passed! ==="

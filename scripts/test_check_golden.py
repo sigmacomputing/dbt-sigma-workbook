@@ -42,25 +42,33 @@ class GoldenTest(unittest.TestCase):
         self.write(self.expected, "a", {"pages": [2, 1]})
         self.assertEqual(len(cg.compare(self.actual, self.expected)), 1)
 
-    def test_connection_ids_are_not_part_of_the_snapshot(self):
-        source = lambda cid: {"elements": [{"source": {"kind": "warehouse-table", "connectionId": cid, "path": ["a", "b", "c"]}}]}
-        self.write(self.actual, "a", source("real-connection"))
-        self.write(self.expected, "a", source("some-other-connection"))
+    def test_environment_ids_are_not_part_of_the_snapshot(self):
+        def spec(suffix):
+            return {
+                "folderId": "folder-" + suffix,
+                "contents": {"elements": [
+                    {"source": {"kind": "warehouse-table", "connectionId": "connection-" + suffix, "path": ["a", "b", "c"]}},
+                    {"source": {"kind": "data-model", "dataModelId": "model-" + suffix, "elementId": "e"}},
+                ]},
+            }
+        self.write(self.actual, "a", spec("real"))
+        self.write(self.expected, "a", spec("other"))
         self.assertEqual(cg.compare(self.actual, self.expected), [])
 
-    def test_other_environment_values_are_still_compared(self):
-        self.write(self.actual, "a", {"folderId": "folder-1", "source": {"connectionId": "x"}})
-        self.write(self.expected, "a", {"folderId": "folder-2", "source": {"connectionId": "y"}})
+    def test_other_values_are_still_compared(self):
+        self.write(self.actual, "a", {"name": "new", "source": {"connectionId": "x"}})
+        self.write(self.expected, "a", {"name": "old", "source": {"connectionId": "y"}})
         (problem,) = cg.compare(self.actual, self.expected)
-        self.assertIn("folder-1", problem)
+        self.assertIn("new", problem)
         self.assertNotIn("connectionId", "".join(line for line in problem.splitlines() if line[:1] in "+-"))
 
-    def test_update_stores_the_placeholder_not_the_real_connection_id(self):
-        self.write(self.actual, "a", {"source": {"connectionId": "real-connection"}, "list": [{"connectionId": "real-connection"}]})
+    def test_update_stores_placeholders_not_real_ids(self):
+        self.write(self.actual, "a", {"folderId": "real-folder", "source": {"connectionId": "real-connection"}, "list": [{"dataModelId": "real-model"}, {"connectionId": "real-connection"}]})
         cg.update(self.actual, self.expected)
         written = (self.expected / "a.json").read_text()
-        self.assertNotIn("real-connection", written)
-        self.assertEqual(written.count("<connectionId>"), 2)
+        for real in ("real-folder", "real-connection", "real-model"):
+            self.assertNotIn(real, written)
+        self.assertEqual((written.count("<connectionId>"), written.count("<folderId>"), written.count("<dataModelId>")), (2, 1, 1))
 
     def test_new_and_removed_workbooks_are_reported(self):
         self.write(self.actual, "new", {})
@@ -113,22 +121,23 @@ class CommittedGoldenFiles(unittest.TestCase):
             self.assertTrue(contents["pages"] and contents["elements"] and contents["layout"], path.name)
             self.assertNotIn("/Users/", path.read_text(), f"{path.name} leaks a local path")
 
-    def test_golden_files_hold_no_real_connection_id(self):
+    def test_golden_files_hold_only_placeholders_for_environment_ids(self):
         for path in sorted(cg.DEFAULT_EXPECTED.glob("*.json")):
-            found = set()
+            found = []
 
             def walk(node):
                 if isinstance(node, dict):
                     for key, value in node.items():
-                        if key == "connectionId":
-                            found.add(value)
+                        if key in cg.PLACEHOLDERS:
+                            found.append((key, value))
                         walk(value)
                 elif isinstance(node, list):
                     for item in node:
                         walk(item)
 
             walk(json.loads(path.read_text()))
-            self.assertLessEqual(found, {"<connectionId>"}, f"{path.name} holds a real connection id: {found}")
+            for key, value in found:
+                self.assertEqual(value, cg.PLACEHOLDERS[key], f"{path.name} holds a real {key}: {value}")
 
 
 if __name__ == "__main__":

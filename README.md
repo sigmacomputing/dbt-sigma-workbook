@@ -47,8 +47,6 @@ packages:
     revision: main            # pin a tag or commit for reproducible builds
 ```
 
-The repository is private, so `dbt deps` needs credentials. In CI, put a token in the URL: `https://{{ env_var('DBT_ENV_SECRET_GIT_CREDENTIAL') }}@github.com/...`.
-
 To reference Sigma data model tables, also install [`Matts52/dbt-sigma-data-models`](https://github.com/Matts52/dbt-sigma-data-models) (optional).
 
 ## Setup
@@ -58,7 +56,7 @@ Set project variables in `dbt_project.yml`:
 ```yaml
 vars:
   sigma_connection_id: "<your-sigma-connection-id>"              # Sigma connection to your warehouse
-  sigma_folder_id: "e7c79c61-94d4-458e-ab4c-f581a4c04a4c"        # folder new workbooks are created in
+  sigma_folder_id: "<your-sigma-folder-id>"                      # folder new workbooks are created in
 ```
 
 | Variable | Used for | Required |
@@ -207,7 +205,7 @@ If the data model is composed with [`dbt-sigma-data-models`](https://github.com/
   ```yaml
   vars:
     sigma_data_model_ids:
-      sigma_sales_model: "5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f"
+      sigma_sales_model: "<your-sigma-data-model-id>"
   ```
 
   Until then the id is the placeholder `unresolved:sigma_sales_model`: the project parses, and the export script refuses to push it.

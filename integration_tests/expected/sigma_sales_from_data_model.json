@@ -29,7 +29,7 @@
         "kind": "kpi-chart",
         "source": {
           "kind": "data-model",
-          "dataModelId": "5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f",
+          "dataModelId": "<dataModelId>",
           "elementId": "3000ebe5c91958b1155f843a41b9d2e6"
         },
         "columns": [
@@ -79,7 +79,7 @@
         "kind": "kpi-chart",
         "source": {
           "kind": "data-model",
-          "dataModelId": "5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f",
+          "dataModelId": "<dataModelId>",
           "elementId": "3000ebe5c91958b1155f843a41b9d2e6"
         },
         "columns": [
@@ -115,7 +115,7 @@
         "kind": "bar-chart",
         "source": {
           "kind": "data-model",
-          "dataModelId": "5c1f0e57-3e0a-4b1c-9f6f-0a5d6c7b8e9f",
+          "dataModelId": "<dataModelId>",
           "elementId": "3000ebe5c91958b1155f843a41b9d2e6"
         },
         "columns": [
@@ -186,5 +186,5 @@
     },
     "layout": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Page type=\"grid\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\" id=\"1dd857e3b1\">\n  <Element elementId=\"f98674d911\" gridColumn=\"1 / 25\" gridRow=\"1 / 4\"/>\n  <Container elementId=\"c675feb435\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"4 / 9\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"83464a9bf5\" gridColumn=\"1 / 13\" gridRow=\"1 / 6\"/>\n    <Element elementId=\"e23575c8c7\" gridColumn=\"13 / 25\" gridRow=\"1 / 6\"/>\n  </Container>\n  <Element elementId=\"f30a28e7de\" gridColumn=\"1 / 25\" gridRow=\"9 / 23\"/>\n</Page>\n"
   },
-  "folderId": "e7c79c61-94d4-458e-ab4c-f581a4c04a4c"
+  "folderId": "<folderId>"
 }
