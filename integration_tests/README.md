@@ -5,7 +5,7 @@ A runnable example project: one seed (`orders`), a staging model, one Sigma data
 ## Run
 
 ```bash
-pip install -r ../ci/requirements-dbt1.txt      # or ../ci/requirements-dbt2.txt for dbt 2.x
+pip install -r ../ci/requirements-dbt1.txt
 bash ../scripts/run_integration_tests_duckdb.sh
 ```
 
