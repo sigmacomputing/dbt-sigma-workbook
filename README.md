@@ -333,18 +333,9 @@ Two macros keep Sigma's many unmodeled options reachable:
 
 Both take part in layout, id checks and private-key stripping. Their raw properties are not checked by the package; `scripts/validate_against_sigma_schema.py` checks them against Sigma's published schema.
 
-## Coverage and known limits
+## Limitations
 
-An initial version aimed at dashboards.
-
-- **Validated by Sigma, not yet rendered.** CI checks every workbook against the request schema in Sigma's public OpenAPI. Output was also checked with `POST /v2/workbooks` and `dryRun: true` against a real organization (every modeled element type, a data model source, child elements). A dry run validates formulas, references, sources, connections and layout, but not how the result *looks* or whether an unqualified `[Column]` resolves. Workbooks as code is Beta and its API can change; run `--push --dry-run` against your own organization first. CI has no Sigma credentials.
-- **Modeled elements**: table, KPI, bar / line / area / scatter / pie / donut charts, pivot table, text, divider, container, list / date-range / text / number-range controls. Not modeled (use [`raw`](#escape-hatches)): maps, combo / waterfall / funnel / gauge / sankey / treemap / box charts, input tables, buttons and actions, forms, images, embeds, tabbed containers, modals and drawers, conditional formatting, reference marks, trellis.
-- **Controls target any data element**, but Sigma's documented filter target is a table. Confirm chart/KPI targets with `--dry-run`.
-- **Layout is flow-only**: no absolute x/y placement or spanning rows.
-- **Source paths use `target.database` / `target.schema`** unless overridden.
-- **Formulas are strings**; the package cannot check them against your data.
-- **Workbook-level `theme=`** changes colors, palettes, fonts and page width; `cards` is project-level.
-- One `sigma_workbook` per model; other `meta` keys are lost to `materialize()`.
+An initial version aimed at dashboards. Coverage, unmodeled elements and known limits are in [`LIMITATIONS.md`](LIMITATIONS.md).
 
 ## Development
 
