@@ -126,6 +126,10 @@
 {% do sigma_workbook.raw('button', 'b', {'_w': 99}) %}
 {% endmacro %}
 
+{% macro assert_table_without_columns_in_tables_rejected() %}
+{% do sigma_workbook.simple_dashboard('D', sigma_workbook_integration_tests._src(), tables=[{'name': 'No columns'}]) %}
+{% endmacro %}
+
 {% macro assert_malformed_field_rejected() %}
 {% do sigma_workbook.table(sigma_workbook_integration_tests._src(), [{'name': 'no formula'}], name='T') %}
 {% endmacro %}

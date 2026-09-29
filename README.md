@@ -27,7 +27,16 @@ Compose [Sigma workbooks](https://help.sigmacomputing.com/docs/manage-workbooks-
 select 1
 ```
 
-That is a title, two filters, a KPI band, two charts and a detail table, all styled with Sigma's blue and wired together, in one model.
+That is a title, two filters, a KPI band, two charts and a detail table, all styled with Sigma's blue and wired together, in one model. For several detail tables, use `tables` instead of (or as well as) `table_columns`:
+
+```sql
+    tables=[
+      {'name': 'Orders',    'columns': ['order_id', 'order_date', 'region', 'amount'], 'sort': [('order_date', 'desc')]},
+      {'name': 'By region', 'columns': ['region', 'segment', 'amount']},
+    ],
+```
+
+Every filter applies to every table, as it does to the KPIs and charts.
 
 **What this package does not do:** it never calls Sigma. It composes JSON at parse time (no warehouse connection needed) and stores it on the model's `meta`. A small optional script, [`scripts/export_workbooks.py`](#getting-the-workbook-into-sigma), turns the manifest into files or pushes them to the Sigma API.
 
@@ -369,7 +378,7 @@ bash scripts/run_integration_tests_duckdb.sh   # the whole suite; no credentials
 python -m unittest scripts/test_export_workbooks.py
 ```
 
-The integration suite (`integration_tests/README.md` describes what it checks) seeds a small dataset, builds workbooks of every shape, checks each compiled spec's structure, cross-references, layout, theme and data-model interop, validates it against Sigma's request schema, exports it, and confirms that 28 kinds of invalid input are rejected. Design notes and a critique of the abstraction are in [`docs/design.md`](docs/design.md).
+The integration suite (`integration_tests/README.md` describes what it checks) seeds a small dataset, builds workbooks of every shape, checks each compiled spec's structure, cross-references, layout, theme and data-model interop, validates it against Sigma's request schema, exports it, and confirms that 29 kinds of invalid input are rejected. Design notes and a critique of the abstraction are in [`docs/design.md`](docs/design.md).
 
 ## License
 

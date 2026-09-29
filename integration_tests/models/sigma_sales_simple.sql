@@ -16,6 +16,9 @@
       {'type': 'date_range', 'name': 'Order date', 'column': 'order_date'},
     ],
     table_columns=['order_id', 'order_date', 'region', 'segment', 'amount'],
+    tables=[
+      {'name': 'Regional detail', 'columns': ['region', 'segment', 'amount'], 'sort': [('amount', 'desc')]},
+    ],
 ) %}
 
 {{ sigma_workbook.materialize(spec) }}
