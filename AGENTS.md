@@ -6,7 +6,7 @@ Guidance for AI coding agents (and humans) working in this repository.
 
 `dbt-sigma-workbook` composes [Sigma workbooks](https://help.sigmacomputing.com/docs/manage-workbooks-as-code) from dbt macros. The spec is pure compile-time JSON, attached to a dbt model's `meta.sigma_workbook` via `sigma_workbook.materialize()`, and read from `manifest.json`. The macros never call Sigma or the warehouse. `scripts/export_workbooks.py` is the optional last mile (write files / push to the Sigma API).
 
-Read `README.md` for usage and `docs/design.md` for the reasoning, the composability critique and the extension recipe.
+Read `README.md` for usage and `docs/design.md` for the reasoning, the composability critique and the extension recipe. For Sigma formulas (kpi values, axes, `field()`), see the skill in `.agents/skills/sigma-formulas/SKILL.md`.
 
 ## Commands
 
