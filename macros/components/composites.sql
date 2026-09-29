@@ -72,19 +72,22 @@
 
 {# A complete one-page dashboard from data alone:
 
-     title -> filters -> KPI band -> chart rows -> detail table
+     title -> filters -> KPI band -> chart rows -> detail table(s)
 
    `kpis` is a list of {value, name, format, compare_to, timeline, period, trend}; `charts` a list of
    chart specs (see chart_from_spec); `filters` a list of {type, name, column} with type one of
-   list, date_range, text; `table_columns` the detail table's fields (omit for no table). Filters
-   are wired to every KPI, chart and the table, so one control narrows the whole page.
+   list, date_range, text. Detail tables come from `tables` - a list of `{name, columns, sort}`
+   mappings, shown in order under the charts - or, for the common single-table case, from
+   `table_columns` (a table called `table_name`, default Detail). Give both and the `table_columns`
+   table comes first. Filters are wired to every KPI, chart and table, so one control narrows the
+   whole page.
 
    Every piece is just the primitives from elements/ - `simple_dashboard` is the shortest path to
    something on screen, and a template for writing your own layout. #}
-{% macro simple_dashboard(name, source, kpis=[], charts=[], filters=[], table_columns=none, subtitle=none, theme={}, table_name='Detail') %}
+{% macro simple_dashboard(name, source, kpis=[], charts=[], filters=[], table_columns=none, subtitle=none, theme={}, table_name='Detail', tables=[]) %}
 {% set source = sigma_workbook.resolve_source(source, 'simple_dashboard') %}
-{% if not (kpis or charts or table_columns) %}
-  {% do sigma_workbook.fail('simple_dashboard', "give at least one of kpis, charts or table_columns.") %}
+{% if not (kpis or charts or table_columns or tables) %}
+  {% do sigma_workbook.fail('simple_dashboard', "give at least one of kpis, charts, table_columns or tables.") %}
 {% endif %}
 
 {% set tiles = [] %}
@@ -101,10 +104,19 @@
   {% do built.append(sigma_workbook.chart_from_spec(source, c)) %}
 {% endfor %}
 
-{% set detail = sigma_workbook.table(source, table_columns, name=table_name, key='detail') if table_columns else none %}
+{% set details = [] %}
+{% if table_columns %}
+  {% do details.append(sigma_workbook.table(source, table_columns, name=table_name, key='detail')) %}
+{% endif %}
+{% for t in tables %}
+  {% if t is not mapping or not t.get('columns') %}
+    {% do sigma_workbook.fail('simple_dashboard', "each entry in tables must be {name, columns[, sort, key]} with columns, got " ~ t) %}
+  {% endif %}
+  {% do details.append(sigma_workbook.table(source, t['columns'], name=t.get('name'), key=t.get('key'), sort=t.get('sort', []))) %}
+{% endfor %}
 
 {# Controls are built last so they can be wired to every element above. #}
-{% set targets_of = tiles + built + ([detail] if detail is not none else []) %}
+{% set targets_of = tiles + built + details %}
 {% set controls = [] %}
 {% for f in filters %}
   {% set kind = f.get('type', 'list') %}
@@ -130,9 +142,9 @@
 {% for pair_start in range(0, built | length, 2) %}
   {% do body.append(sigma_workbook.row(built[pair_start:pair_start + 2], 'charts:' ~ pair_start)) %}
 {% endfor %}
-{% if detail is not none %}
+{% for detail in details %}
   {% do body.append(detail) %}
-{% endif %}
+{% endfor %}
 
 {% do return(sigma_workbook.workbook(name, [sigma_workbook.page(name, body)], theme=theme)) %}
 {% endmacro %}

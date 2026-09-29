@@ -50,7 +50,7 @@ Short answer: composable enough that the common cases need no escape, and the es
 - **Closure.** Every constructor returns the same kind of thing it accepts: sources go into elements, elements into pages and into other elements (`source=`), controls take elements, composites take and return elements, `page()` flattens lists of them. `simple_dashboard` is written with the public API only; nothing in it is privileged. That property is tested: the integration workbooks are built three ways (primitives, `simple_dashboard`, data-model source) and go through one validator.
 - **One place per concern.** Color decisions live in the theme; id derivation in `freeze_id`; layout in `layout.sql`; output format in `workbook()`. Changing the layout tags for a new API generation touched one file.
 - **Late binding where it matters.** Element colors are markers resolved when the workbook is assembled, so a workbook-level `theme=` recolors elements built earlier. Without it, every element macro would need a `theme` argument.
-- **Fail early, name the line.** Empty pages, duplicate names, colliding ids, bad tokens, malformed fields, control/column clashes all fail at `dbt parse` with the macro that caught them. 28 kinds of invalid input are pinned by tests.
+- **Fail early, name the line.** Empty pages, duplicate names, colliding ids, bad tokens, malformed fields, control/column clashes all fail at `dbt parse` with the macro that caught them. 29 kinds of invalid input are pinned by tests.
 
 ### Where it falls short, and what was done about it
 

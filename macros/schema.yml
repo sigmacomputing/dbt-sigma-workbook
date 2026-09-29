@@ -52,7 +52,7 @@ macros:
         description: dbt materialization for the (otherwise empty) model. Default `view`; `ephemeral` creates nothing in the warehouse.
 
   - name: simple_dashboard
-    description: A complete one-page dashboard from data alone - title, filters, KPI band, chart rows, detail table - built entirely from the public primitives. Filters are wired to every KPI, chart and the table.
+    description: A complete one-page dashboard from data alone - title, filters, KPI band, chart rows, detail table(s) - built entirely from the public primitives. Filters are wired to every KPI, chart and the table.
     arguments:
       - name: name
         type: string
@@ -71,7 +71,7 @@ macros:
         description: "List of `{type, name, column}` mappings; `type` is list (default), date_range or text. Default `[]`."
       - name: table_columns
         type: list[any]
-        description: Fields for the detail table. Omit for no table.
+        description: Fields for a single detail table (named `table_name`). Shorthand for one entry in `tables`. Omit for no table.
       - name: subtitle
         type: string
         description: Muted line under the title.
@@ -81,6 +81,9 @@ macros:
       - name: table_name
         type: string
         description: Title of the detail table. Default `Detail`.
+      - name: tables
+        type: list[any]
+        description: "Detail tables shown under the charts, in order: a list of `{name, columns, sort, key}` mappings (`columns` required; `sort` as in `table`; `key` only needed if two tables share a name). Default `[]`. Filters apply to all of them."
 
   # ---------------------------------------------------------------- sources
   - name: from_ref

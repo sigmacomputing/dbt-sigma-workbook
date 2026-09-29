@@ -232,6 +232,22 @@
 {% set donut = sigma_workbook_integration_tests._find(dc.elements, 'donut-chart', none) %}
 {% do sigma_workbook_integration_tests._ok(donut.id in breakdown_xml and line.id not in breakdown_xml, 'layout puts each element on the right page') %}
 
+{# ---- simple_dashboard: several detail tables ---- #}
+{% set simple = sigma_workbook_integration_tests._spec_of('sigma_sales_simple').contents %}
+{% set simple_tables = simple.elements | selectattr('kind', 'equalto', 'table') | list %}
+{% do sigma_workbook_integration_tests._ok(simple_tables | map(attribute='name') | list == ['Detail', 'Regional detail'], 'simple_dashboard emits table_columns first, then each entry of tables, in order') %}
+{% do sigma_workbook_integration_tests._ok(simple_tables[1].sort[0].direction == 'descending', 'a table in tables keeps its sort') %}
+{% set simple_controls = simple.elements | selectattr('kind', 'equalto', 'control') | list %}
+{% for c in simple_controls %}
+  {% set targeted = c.filters | map(attribute='source') | map(attribute='elementId') | list %}
+  {% for t in simple_tables %}
+    {% do sigma_workbook_integration_tests._ok(t.id in targeted, 'control ' ~ c.controlId ~ ' filters the table ' ~ t.name) %}
+  {% endfor %}
+{% endfor %}
+{% set simple_xml_order = [] %}
+{% for t in simple_tables %}{% do simple_xml_order.append(simple.layout.index(t.id)) %}{% endfor %}
+{% do sigma_workbook_integration_tests._ok(simple_xml_order == simple_xml_order | sort, 'detail tables are laid out in the order given') %}
+
 {# ---- theme: project var + per-workbook override + Sigma-blue default ---- #}
 {% do sigma_workbook_integration_tests._ok(dc.settings.theme.overrides.colors.highlight == '#1A70F1', 'default primary is Sigma blue') %}
 {% do sigma_workbook_integration_tests._ok(dc.settings.theme.overrides.categoricalScheme == 'superbloom', 'default categorical palette is superbloom') %}
