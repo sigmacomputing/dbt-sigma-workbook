@@ -1,0 +1,741 @@
+{
+  "name": "Sales dashboard",
+  "contents": {
+    "schemaVersion": 1,
+    "kind": "workbook",
+    "pages": [
+      {
+        "id": "1dd857e3b1",
+        "name": "Overview"
+      },
+      {
+        "id": "2051166aa0",
+        "name": "Breakdown"
+      }
+    ],
+    "elements": [
+      {
+        "id": "8f7b53d86a",
+        "kind": "text",
+        "body": "# Sales overview\n\n<span style=\"color: #737373\">Bookings against plan</span>",
+        "verticalAlign": "center"
+      },
+      {
+        "id": "625c08ec28",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "86294fb4d0",
+        "kind": "control",
+        "controlType": "list",
+        "controlId": "region-control",
+        "name": "Region",
+        "filters": [
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "ebc3638387"
+            },
+            "columnId": "ccc4e2ac30"
+          },
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "83464a9bf5"
+            },
+            "columnId": "61eaa2ed55"
+          },
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "f30a28e7de"
+            },
+            "columnId": "6c17779fe1"
+          },
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "0dff74f759"
+            },
+            "columnId": "66964abb49"
+          }
+        ],
+        "mode": "include",
+        "selectionMode": "multiple",
+        "source": {
+          "kind": "source",
+          "source": {
+            "kind": "table",
+            "elementId": "ebc3638387"
+          },
+          "columnId": "ccc4e2ac30"
+        }
+      },
+      {
+        "id": "6fd07897af",
+        "kind": "control",
+        "controlType": "date-range",
+        "controlId": "order-date-control",
+        "name": "Order date",
+        "filters": [
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "ebc3638387"
+            },
+            "columnId": "3fc4962bd6"
+          },
+          {
+            "source": {
+              "kind": "table",
+              "elementId": "0dff74f759"
+            },
+            "columnId": "4edacf35ad"
+          }
+        ],
+        "mode": "between"
+      },
+      {
+        "id": "c675feb435",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "83464a9bf5",
+        "kind": "kpi-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "7ddf1254f5",
+            "formula": "Sum([Amount])",
+            "format": {
+              "kind": "number",
+              "formatString": "$.0f",
+              "decimalSymbol": ".",
+              "digitGroupingSymbol": ",",
+              "digitGroupingSize": [
+                3
+              ],
+              "currencySymbol": "$"
+            }
+          },
+          {
+            "id": "271652d713",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "58f73555eb",
+            "formula": "Sum([Target Amount])"
+          },
+          {
+            "id": "37ca3dddf8",
+            "formula": "[stg_orders/Target Amount]"
+          },
+          {
+            "id": "61eaa2ed55",
+            "formula": "[stg_orders/Region]"
+          }
+        ],
+        "value": {
+          "columnId": "7ddf1254f5",
+          "color": "#0a0a0a",
+          "fontWeight": "bold"
+        },
+        "name": {
+          "text": "Revenue",
+          "color": "#737373",
+          "fontWeight": "normal",
+          "fontSize": 14
+        },
+        "comparisonColumn": {
+          "columnId": "58f73555eb"
+        },
+        "comparison": {
+          "direction": "higher",
+          "colorGood": "#008236",
+          "colorBad": "#c10007",
+          "labelColor": "#737373",
+          "display": "percentage",
+          "label": "plan"
+        },
+        "layout": {
+          "anchor": "left",
+          "verticalAnchor": "top"
+        },
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "e23575c8c7",
+        "kind": "kpi-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "b47b0e4bb5",
+            "formula": "CountDistinct([Order Id])",
+            "format": {
+              "kind": "number",
+              "formatString": ".0f",
+              "decimalSymbol": ".",
+              "digitGroupingSymbol": ",",
+              "digitGroupingSize": [
+                3
+              ]
+            }
+          },
+          {
+            "id": "206375d3af",
+            "formula": "[stg_orders/Order Id]"
+          },
+          {
+            "id": "7cb61c105c",
+            "formula": "DateTrunc(\"month\", [stg_orders/Order Date])",
+            "name": "Trend month"
+          }
+        ],
+        "value": {
+          "columnId": "b47b0e4bb5",
+          "color": "#0a0a0a",
+          "fontWeight": "bold"
+        },
+        "name": {
+          "text": "Orders",
+          "color": "#737373",
+          "fontWeight": "normal",
+          "fontSize": 14
+        },
+        "timeline": {
+          "columnId": "7cb61c105c"
+        },
+        "periodComparison": "month",
+        "comparison": {
+          "direction": "higher",
+          "colorGood": "#008236",
+          "colorBad": "#c10007",
+          "labelColor": "#737373",
+          "display": "percentage"
+        },
+        "trend": {
+          "shape": "area",
+          "areaStyle": "gradient",
+          "valueColor": "#1A70F1"
+        },
+        "layout": {
+          "anchor": "left",
+          "verticalAnchor": "top"
+        },
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "68d491f971",
+        "kind": "kpi-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "7e816f070e",
+            "formula": "Avg([Amount])",
+            "format": {
+              "kind": "number",
+              "formatString": "$.2f",
+              "decimalSymbol": ".",
+              "digitGroupingSymbol": ",",
+              "digitGroupingSize": [
+                3
+              ],
+              "currencySymbol": "$"
+            }
+          },
+          {
+            "id": "aff95f7b29",
+            "formula": "[stg_orders/Amount]"
+          }
+        ],
+        "value": {
+          "columnId": "7e816f070e",
+          "color": "#0a0a0a",
+          "fontWeight": "bold"
+        },
+        "name": {
+          "text": "Average order",
+          "color": "#737373",
+          "fontWeight": "normal",
+          "fontSize": 14
+        },
+        "layout": {
+          "anchor": "left",
+          "verticalAnchor": "top"
+        },
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "0d1659da33",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "f30a28e7de",
+        "kind": "bar-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "8bddfd8619",
+            "formula": "[stg_orders/Region]"
+          },
+          {
+            "id": "c3b2ec513c",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "da6b34e6a9",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "6c17779fe1",
+            "formula": "[stg_orders/Region]"
+          }
+        ],
+        "xAxis": {
+          "columnId": "8bddfd8619",
+          "sort": {
+            "by": "c3b2ec513c",
+            "direction": "descending"
+          }
+        },
+        "yAxis": {
+          "columnIds": [
+            "c3b2ec513c"
+          ]
+        },
+        "color": {
+          "by": "single",
+          "value": "#1A70F1"
+        },
+        "dataLabel": {
+          "labels": "shown"
+        },
+        "name": "Revenue by region",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        },
+        "barStyle": {
+          "cornerRadius": "round"
+        },
+        "gap": {
+          "width": "small"
+        }
+      },
+      {
+        "id": "0dff74f759",
+        "kind": "line-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "e063d40351",
+            "formula": "DateTrunc(\"month\", [Order Date])"
+          },
+          {
+            "id": "54079f81c5",
+            "formula": "[stg_orders/Order Date]"
+          },
+          {
+            "id": "e4d5203e53",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "a9fe325aac",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "29d483e2b7",
+            "formula": "[stg_orders/Segment]"
+          },
+          {
+            "id": "66964abb49",
+            "formula": "[stg_orders/Region]"
+          },
+          {
+            "id": "4edacf35ad",
+            "formula": "[stg_orders/Order Date]"
+          }
+        ],
+        "xAxis": {
+          "columnId": "e063d40351",
+          "sort": {
+            "by": "e063d40351",
+            "direction": "ascending"
+          }
+        },
+        "yAxis": {
+          "columnIds": [
+            "e4d5203e53"
+          ]
+        },
+        "color": {
+          "by": "category",
+          "column": "29d483e2b7"
+        },
+        "name": "Revenue by month",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "b8e448d483",
+        "kind": "text",
+        "body": "Revenue is recognised on order date.",
+        "verticalAlign": "top"
+      },
+      {
+        "id": "b339610414",
+        "kind": "divider",
+        "direction": "horizontal",
+        "style": {
+          "color": "#e5e5e5",
+          "width": 1,
+          "strokeStyle": "solid"
+        }
+      },
+      {
+        "id": "01243bbc7e",
+        "kind": "button",
+        "text": "Open Sigma",
+        "appearance": "outline"
+      },
+      {
+        "id": "828afcf525",
+        "kind": "text",
+        "body": "### Where the revenue comes from",
+        "verticalAlign": "center"
+      },
+      {
+        "id": "7c2a69b0fa",
+        "kind": "container",
+        "style": {
+          "padding": "none",
+          "backgroundColor": "transparent"
+        }
+      },
+      {
+        "id": "9e62cb0918",
+        "kind": "donut-chart",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "52e162a505",
+            "formula": "[stg_orders/Segment]"
+          },
+          {
+            "id": "454e2296f4",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "8feeb5f7b4",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "56dc963b24",
+            "formula": "Sum([Amount])"
+          }
+        ],
+        "color": {
+          "columnId": "52e162a505"
+        },
+        "value": {
+          "columnId": "454e2296f4"
+        },
+        "dataLabel": {
+          "labels": "shown",
+          "labelDisplay": "percent"
+        },
+        "name": "Revenue by segment",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        },
+        "holeValue": {
+          "columnId": "56dc963b24"
+        }
+      },
+      {
+        "id": "8797474728",
+        "kind": "pivot-table",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "afd8528a43",
+            "formula": "Sum([Amount])"
+          },
+          {
+            "id": "947541be51",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "2c7b7e81ab",
+            "formula": "[stg_orders/Region]"
+          },
+          {
+            "id": "deccc13112",
+            "formula": "[stg_orders/Segment]"
+          }
+        ],
+        "values": [
+          "afd8528a43"
+        ],
+        "rowsBy": [
+          {
+            "columnId": "2c7b7e81ab"
+          }
+        ],
+        "columnsBy": [
+          {
+            "columnId": "deccc13112"
+          }
+        ],
+        "name": "Region x segment",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "7a057352c2",
+        "kind": "bar-chart",
+        "source": {
+          "kind": "table",
+          "elementId": "ebc3638387"
+        },
+        "columns": [
+          {
+            "id": "7394213f93",
+            "formula": "[stg_orders/Segment]"
+          },
+          {
+            "id": "61dbd23a48",
+            "formula": "Sum([Revenue])"
+          },
+          {
+            "id": "a304d5364b",
+            "formula": "[Revenue]"
+          }
+        ],
+        "xAxis": {
+          "columnId": "7394213f93",
+          "sort": {
+            "by": "61dbd23a48",
+            "direction": "descending"
+          }
+        },
+        "yAxis": {
+          "columnIds": [
+            "61dbd23a48"
+          ]
+        },
+        "color": {
+          "by": "single",
+          "value": "#1A70F1"
+        },
+        "name": "Revenue by segment (from the table)",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      },
+      {
+        "id": "ebc3638387",
+        "kind": "table",
+        "source": {
+          "kind": "warehouse-table",
+          "connectionId": "17edf046-9636-4d9b-a13f-d034bec2d600",
+          "path": [
+            "integration_tests",
+            "main",
+            "stg_orders"
+          ]
+        },
+        "columns": [
+          {
+            "id": "c85286e845",
+            "formula": "[stg_orders/Order Id]"
+          },
+          {
+            "id": "b17dc77d62",
+            "formula": "[stg_orders/Order Date]"
+          },
+          {
+            "id": "92809ea040",
+            "formula": "[stg_orders/Region]"
+          },
+          {
+            "id": "cf923a1d26",
+            "formula": "[stg_orders/Segment]"
+          },
+          {
+            "id": "81a9b64a4b",
+            "formula": "[Amount]",
+            "name": "Revenue",
+            "format": {
+              "kind": "number",
+              "formatString": "$.2f",
+              "decimalSymbol": ".",
+              "digitGroupingSymbol": ",",
+              "digitGroupingSize": [
+                3
+              ],
+              "currencySymbol": "$"
+            }
+          },
+          {
+            "id": "165164d360",
+            "formula": "[stg_orders/Amount]"
+          },
+          {
+            "id": "ccc4e2ac30",
+            "formula": "[stg_orders/Region]"
+          },
+          {
+            "id": "3fc4962bd6",
+            "formula": "[stg_orders/Order Date]"
+          }
+        ],
+        "order": [
+          "c85286e845",
+          "b17dc77d62",
+          "92809ea040",
+          "cf923a1d26",
+          "81a9b64a4b"
+        ],
+        "sort": [
+          {
+            "columnId": "b17dc77d62",
+            "direction": "descending"
+          }
+        ],
+        "name": "Orders",
+        "style": {
+          "backgroundColor": "#ffffff",
+          "borderRadius": "round",
+          "borderWidth": 1,
+          "borderColor": "#e5e5e5"
+        }
+      }
+    ],
+    "settings": {
+      "theme": {
+        "name": "Light",
+        "overrides": {
+          "colors": {
+            "text": "#0a0a0a",
+            "highlight": "#1A70F1",
+            "surface": "#ffffff",
+            "success": "#008236",
+            "warning": "#bb4d00",
+            "danger": "#c10007"
+          },
+          "categoricalScheme": "superbloom",
+          "colorOverrides": [
+            {
+              "name": "backgroundCanvas",
+              "color": "#fafafa"
+            }
+          ],
+          "pageWidth": "large"
+        }
+      }
+    },
+    "layout": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Page type=\"grid\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\" id=\"1dd857e3b1\">\n  <Element elementId=\"8f7b53d86a\" gridColumn=\"1 / 25\" gridRow=\"1 / 4\"/>\n  <Container elementId=\"625c08ec28\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"4 / 6\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"86294fb4d0\" gridColumn=\"1 / 7\" gridRow=\"1 / 3\"/>\n    <Element elementId=\"6fd07897af\" gridColumn=\"7 / 13\" gridRow=\"1 / 3\"/>\n  </Container>\n  <Container elementId=\"c675feb435\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"6 / 11\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"83464a9bf5\" gridColumn=\"1 / 9\" gridRow=\"1 / 6\"/>\n    <Element elementId=\"e23575c8c7\" gridColumn=\"9 / 17\" gridRow=\"1 / 6\"/>\n    <Element elementId=\"68d491f971\" gridColumn=\"17 / 25\" gridRow=\"1 / 6\"/>\n  </Container>\n  <Container elementId=\"0d1659da33\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"11 / 25\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"f30a28e7de\" gridColumn=\"1 / 13\" gridRow=\"1 / 15\"/>\n    <Element elementId=\"0dff74f759\" gridColumn=\"13 / 25\" gridRow=\"1 / 15\"/>\n  </Container>\n  <Element elementId=\"b8e448d483\" gridColumn=\"1 / 25\" gridRow=\"25 / 27\"/>\n  <Element elementId=\"b339610414\" gridColumn=\"1 / 25\" gridRow=\"27 / 28\"/>\n  <Element elementId=\"01243bbc7e\" gridColumn=\"1 / 5\" gridRow=\"28 / 30\"/>\n</Page>\n<Page type=\"grid\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\" id=\"2051166aa0\">\n  <Element elementId=\"828afcf525\" gridColumn=\"1 / 25\" gridRow=\"1 / 3\"/>\n  <Container elementId=\"7c2a69b0fa\" type=\"grid\" gridColumn=\"1 / 25\" gridRow=\"3 / 17\" gridTemplateColumns=\"repeat(24, 1fr)\" gridTemplateRows=\"auto\">\n    <Element elementId=\"9e62cb0918\" gridColumn=\"1 / 13\" gridRow=\"1 / 15\"/>\n    <Element elementId=\"8797474728\" gridColumn=\"13 / 25\" gridRow=\"1 / 15\"/>\n  </Container>\n  <Element elementId=\"7a057352c2\" gridColumn=\"1 / 13\" gridRow=\"17 / 31\"/>\n  <Element elementId=\"ebc3638387\" gridColumn=\"1 / 25\" gridRow=\"31 / 45\"/>\n</Page>\n"
+  },
+  "folderId": "e7c79c61-94d4-458e-ab4c-f581a4c04a4c",
+  "description": "Integration-test workbook built from primitives"
+}

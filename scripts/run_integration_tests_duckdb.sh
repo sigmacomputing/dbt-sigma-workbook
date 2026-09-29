@@ -8,6 +8,8 @@
 #   DBT          the dbt executable to use (default: `dbt` on PATH) - 1.x and 2.x both work
 #   PYTHON       the Python used for scripts/ (default: python3); `pip install jsonschema` enables step 5b
 #   PARSE_FLAGS  extra flags for `dbt parse`, e.g. --warn-error (dbt 1.x)
+#   REQUIRE_JSONSCHEMA  set to fail (rather than skip) step 5b when jsonschema is missing; CI sets it
+#   UPDATE_GOLDEN       set to rewrite integration_tests/expected/ with the current output (review the diff!)
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,58 +45,67 @@ $DBT run-operation assert_workbooks
 echo ""
 echo "5. Exporting specs from the manifest and validating the JSON files..."
 OUT_DIR="$(mktemp -d)"
+LOG="$(mktemp)"
+trap 'rm -rf "$OUT_DIR" "$LOG"' EXIT
 "$PYTHON" "$REPO_ROOT/scripts/export_workbooks.py" --manifest target/manifest.json --out "$OUT_DIR"
-for f in sigma_sales_dashboard sigma_sales_simple sigma_sales_from_data_model; do
-  test -s "$OUT_DIR/$f.json" || { echo "missing export: $f.json"; exit 1; }
-  "$PYTHON" -c "import json,sys; d=json.load(open(sys.argv[1])); c=d['contents']; assert d['name'] and c['schemaVersion']==1 and c['pages'] and c['elements'], 'bad spec'" "$OUT_DIR/$f.json"
-  echo "exported $f.json"
+EXPORTED=0
+for f in "$OUT_DIR"/*.json; do
+  test -s "$f" || { echo "empty export: $f"; exit 1; }
+  "$PYTHON" -c "import json,sys; d=json.load(open(sys.argv[1])); c=d['contents']; assert d['name'] and c['schemaVersion']==1 and c['pages'] and c['elements'], 'bad spec'" "$f"
+  echo "exported $(basename "$f")"
+  EXPORTED=$((EXPORTED + 1))
 done
+# Guards against the glob silently matching nothing.
+[ "$EXPORTED" -ge 3 ] || { echo "expected at least 3 exported workbooks, found $EXPORTED"; exit 1; }
 # The offline check the deploy script performs before it would ever call Sigma:
 "$PYTHON" "$REPO_ROOT/scripts/export_workbooks.py" --manifest target/manifest.json --out "$OUT_DIR" --check
+
+echo ""
+echo "5a. Comparing every compiled workbook with its golden file (integration_tests/expected/)..."
+# The specs are deterministic, so the exact JSON is committed. UPDATE_GOLDEN=1 accepts new output.
+if [ -n "$UPDATE_GOLDEN" ]; then
+  "$PYTHON" "$REPO_ROOT/scripts/check_golden.py" --actual "$OUT_DIR" --update
+else
+  "$PYTHON" "$REPO_ROOT/scripts/check_golden.py" --actual "$OUT_DIR"
+fi
 
 echo ""
 echo "5b. Validating against Sigma's published request schema (POST /v2/workbooks)..."
 if "$PYTHON" -c "import jsonschema" 2>/dev/null; then
   "$PYTHON" "$REPO_ROOT/scripts/validate_against_sigma_schema.py" --manifest target/manifest.json
+elif [ -n "$REQUIRE_JSONSCHEMA" ]; then
+  echo "jsonschema is not installed but REQUIRE_JSONSCHEMA is set."
+  exit 1
 else
   echo "jsonschema is not installed - skipping (pip install jsonschema to enable)."
 fi
 
 echo ""
-echo "6. Asserting invalid input is rejected with a compiler error..."
-NEGATIVE_MACROS="
-assert_empty_workbook_rejected
-assert_empty_page_rejected
-assert_duplicate_page_name_rejected
-assert_duplicate_element_id_rejected
-assert_unnamed_element_rejected
-assert_unknown_color_token_rejected
-assert_unknown_color_ref_rejected
-assert_bad_sort_direction_rejected
-assert_table_without_columns_rejected
-assert_pivot_without_axes_rejected
-assert_empty_container_rejected
-assert_overwide_element_rejected
-assert_bad_source_rejected
-assert_bad_warehouse_path_rejected
-assert_unsupported_format_kind_rejected
-assert_unsupported_format_option_rejected
-assert_control_without_targets_rejected
-assert_control_with_foreign_target_rejected
-assert_unknown_chart_type_rejected
-assert_unknown_filter_type_rejected
-assert_empty_simple_dashboard_rejected
-assert_malformed_field_rejected
-assert_control_id_column_collision_rejected
-assert_extend_id_rejected
-assert_extend_foreign_element_rejected
-assert_raw_without_key_rejected
-assert_raw_private_key_rejected
-"
-LOG="$(mktemp)"
-for macro in $NEGATIVE_MACROS; do
+echo "6. Asserting invalid input is rejected with the expected compiler error..."
+# negative_cases.txt lists each macro and the text its error must contain, so a case can't pass because
+# of a typo in the test or an unrelated error. The macros in assert_rejected.sql and the entries in that
+# file must match one to one, so none can go unrun.
+CASES="$INT_TESTS_DIR/negative_cases.txt"
+trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]]}"}"; printf '%s' "$s"; }
+DEFINED="$(grep -o 'macro assert_[a-z_]*_rejected' "$INT_TESTS_DIR/macros/assert_rejected.sql" | awk '{print $2}' | sort)"
+LISTED="$(grep -v '^[[:space:]]*#' "$CASES" | grep -v '^[[:space:]]*$' | cut -d'|' -f1 | tr -d ' ' | sort)"
+if [ "$DEFINED" != "$LISTED" ]; then
+  echo "assert_rejected.sql and negative_cases.txt disagree (< defined only, > listed only):"
+  diff <(echo "$DEFINED") <(echo "$LISTED") || true
+  exit 1
+fi
+CASE_COUNT=0
+while IFS='|' read -r macro expected vars; do
+  macro="$(trim "$macro")"
+  case "$macro" in ''|'#'*) continue ;; esac
+  expected="$(trim "$expected")"
+  vars="$(trim "$vars")"
   set +e
-  $DBT run-operation "$macro" > "$LOG" 2>&1
+  if [ -n "$vars" ]; then
+    $DBT run-operation "$macro" --vars "$vars" > "$LOG" 2>&1
+  else
+    $DBT run-operation "$macro" > "$LOG" 2>&1
+  fi
   status=$?
   set -e
   if [ $status -eq 0 ]; then
@@ -102,20 +113,18 @@ for macro in $NEGATIVE_MACROS; do
     cat "$LOG"
     exit 1
   fi
-  echo "  $macro was correctly rejected."
-done
-
-# Needs the project var blanked, so it runs on its own.
-set +e
-$DBT run-operation assert_missing_connection_id_rejected --vars "{sigma_connection_id: ''}" > "$LOG" 2>&1
-status=$?
-set -e
-if [ $status -eq 0 ]; then
-  echo "Expected assert_missing_connection_id_rejected to raise a compiler error, but it succeeded:"
-  cat "$LOG"
-  exit 1
-fi
-echo "  assert_missing_connection_id_rejected was correctly rejected."
+  if ! grep -qF -- "$expected" "$LOG"; then
+    echo "$macro failed, but not with the expected error."
+    echo "  expected to contain: $expected"
+    echo "  dbt said:"
+    sed 's/^/    /' "$LOG"
+    exit 1
+  fi
+  echo "  $macro was rejected: $expected"
+  CASE_COUNT=$((CASE_COUNT + 1))
+done < "$CASES"
+[ "$CASE_COUNT" -ge 1 ] || { echo "no negative cases ran"; exit 1; }
+echo "  $CASE_COUNT negative cases passed."
 
 echo ""
 echo "=== All tests passed! ==="

@@ -22,12 +22,13 @@ jobs:
       - name: Install pinned dependencies
         run: pip install -r ci/requirements-dbt1.txt
 
-      - name: Script unit tests (export + push against a fake Sigma API)
-        run: python -m unittest scripts/test_export_workbooks.py
+      - name: Script unit tests (export/push against a fake Sigma API, golden compare, schema validator)
+        run: python -m unittest discover -s scripts -p "test_*.py"
 
       - name: Integration tests
         env:
           PARSE_FLAGS: --warn-error
+          REQUIRE_JSONSCHEMA: "1"
         run: bash scripts/run_integration_tests_duckdb.sh
 
   # The same suite on dbt 2.x. This is the job that backs the "supports dbt 2" claim in the README.
@@ -45,7 +46,9 @@ jobs:
         run: pip install -r ci/requirements-dbt2.txt
 
       - name: Script unit tests
-        run: python -m unittest scripts/test_export_workbooks.py
+        run: python -m unittest discover -s scripts -p "test_*.py"
 
       - name: Integration tests
+        env:
+          REQUIRE_JSONSCHEMA: "1"
         run: bash scripts/run_integration_tests_duckdb.sh

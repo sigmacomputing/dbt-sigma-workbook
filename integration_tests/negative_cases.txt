@@ -1,0 +1,37 @@
+# Every negative test: the macro in macros/assert_rejected.sql, and the text its compiler error MUST contain.
+#
+#   macro | expected error text | [value for --vars]
+#
+# scripts/run_integration_tests_duckdb.sh runs each macro and fails unless dbt exits non-zero AND the
+# output contains the expected text. Matching the message (not just the exit code) means a case can't
+# pass because of a typo in the test itself or an unrelated error. The script also fails if a macro in
+# assert_rejected.sql is missing from this file, or a line here has no macro, so nothing goes unrun.
+assert_empty_workbook_rejected | sigma_workbook.workbook: pages must not be empty
+assert_empty_page_rejected | sigma_workbook.page: page 'P' has no elements
+assert_duplicate_page_name_rejected | sigma_workbook.workbook: duplicate page name 'P'
+assert_duplicate_element_id_rejected | resolve to the same element id. Give one of them a distinct `key=`
+assert_unnamed_element_rejected | sigma_workbook.bar_chart: set `name=` or `key=` so the element gets a stable id
+assert_unknown_color_token_rejected | sigma_workbook.color: unknown color token 'chartreuse'
+assert_unknown_color_ref_rejected | sigma_workbook.color: unknown color token 'chartreuse'
+assert_bad_sort_direction_rejected | sort direction must be 'asc' or 'desc', got 'sideways'
+assert_table_without_columns_rejected | sigma_workbook.table: columns is required
+assert_pivot_without_axes_rejected | sigma_workbook.pivot_table: give at least one of `rows` or `cols`
+assert_empty_container_rejected | sigma_workbook.container: elements must not be empty
+assert_overwide_element_rejected | sigma_workbook.layout: element 'text:w' is 30 columns wide but the grid has 24
+assert_bad_source_rejected | sigma_workbook.table: source must be a sigma_workbook source or element
+assert_bad_warehouse_path_rejected | sigma_workbook.warehouse_table: path must be [database, schema, table]
+assert_missing_connection_id_rejected | sigma_workbook.warehouse_table: connection_id is required | {sigma_connection_id: ''}
+assert_unsupported_format_kind_rejected | sigma_workbook.format: kind must be 'number' or 'datetime', got 'currency'
+assert_unsupported_format_option_rejected | 'currencySymbol' is not a supported option for kind='datetime'
+assert_control_without_targets_rejected | sigma_workbook.list_control: targets must list at least one
+assert_control_with_foreign_target_rejected | sigma_workbook.list_control: each target must be (element, field)
+assert_unknown_chart_type_rejected | sigma_workbook.simple_dashboard: unknown chart type 'radar'
+assert_unknown_filter_type_rejected | sigma_workbook.simple_dashboard: unknown filter type 'astrology'
+assert_empty_simple_dashboard_rejected | sigma_workbook.simple_dashboard: give at least one of kpis, charts or table_columns
+assert_malformed_field_rejected | sigma_workbook.table: a field must be a string or sigma_workbook.field(...)
+assert_control_id_column_collision_rejected | which is also the name of a column on 'table:T'
+assert_extend_id_rejected | sigma_workbook.extend: 'id' can't be overridden
+assert_extend_foreign_element_rejected | sigma_workbook.extend: expected an element built by a sigma_workbook macro
+assert_raw_without_key_rejected | sigma_workbook.raw: set `name=` or `key=`
+assert_raw_private_key_rejected | sigma_workbook.raw: '_w' can't be set
+assert_bad_output_format_rejected | sigma_workbook.workbook: output must be 'contents' or 'spec', got 'xml'
