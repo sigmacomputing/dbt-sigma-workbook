@@ -29,17 +29,17 @@ select 1
 
 That is a title, two filters, a KPI band, two charts and a detail table in one model.
 
-The package never calls Sigma. It composes JSON at parse time (no warehouse connection needed) and stores it on the model's `meta`. An optional script, [`scripts/export_workbooks.py`](#getting-the-workbook-into-sigma), turns the manifest into files or pushes them to the Sigma API.
+The package never calls Sigma. It composes JSON at parse time (no warehouse connection needed) and stores it on the model's `meta`. An optional script, [`scripts/export_workbooks.py`](scripts/README.md), turns the manifest into files or pushes them to the Sigma API.
 
 ## Requirements
 
-- dbt `>=1.6.0, <3.0.0`; dbt 1.x and 2.x are both tested in CI.
+- dbt `>=1.6.0, <3.0.0`.
 - Any adapter. The macros emit JSON, not SQL.
 - To publish: a Sigma organization with [workbooks as code](https://help.sigmacomputing.com/docs/manage-workbooks-as-code) (Beta), a Sigma connection to your warehouse, and an API client for the push script.
 
 ## Installation
 
-Not on the dbt Hub yet; install from git in `packages.yml`:
+Not on the dbt Package Hub yet; install from git in `packages.yml`:
 
 ```yaml
 packages:
@@ -67,7 +67,7 @@ vars:
 | `sigma_folder_id` | Where the workbook is created. Or pass `folder_id=` per workbook. | To create (not update) a workbook |
 | `sigma_data_model_ids` | `{dbt_model_name: sigma_data_model_id}` for [`from_data_model`](#from-a-sigma-data-model). | When reading from data models |
 | `sigma_workbook_theme` | Project-wide [theme](#theming). | No |
-| `sigma_workbook_format` | `contents` (default) or `spec`; see [output format](#output-format). | No |
+| `sigma_workbook_format` | `contents` (default) or `spec`; see [output format](scripts/README.md#output-format). | No |
 
 `sigma_connection_id` and `sigma_folder_id` match `dbt-sigma-data-models`, so a project using both configures them once.
 
@@ -258,40 +258,6 @@ Color tokens: `primary`, `text`, `body`, `muted`, `hairline`, `canvas`, `surface
 
 The theme is written to the workbook's `settings.theme`, and element colors use the same tokens, so a workbook-level `theme=` recolors them too. Use tokens in your own macros with `sigma_workbook.color('primary')`.
 
-## Getting the workbook into Sigma
-
-`dbt parse` puts each request body at `manifest.json` -> `nodes.<model>.config.meta.sigma_workbook`. [`scripts/export_workbooks.py`](scripts/export_workbooks.py) is a dependency-free Python (3.9+) script that takes it from there:
-
-```bash
-dbt parse
-python scripts/export_workbooks.py --out sigma_workbooks/         # write one <model>.json per workbook
-python scripts/export_workbooks.py --check                        # validate offline; non-zero on problems
-python scripts/export_workbooks.py --select sigma_sales_dashboard --out sigma_workbooks/
-
-export SIGMA_API_URL=https://api.sigmacomputing.com               # your region's API host
-export SIGMA_CLIENT_ID=... SIGMA_CLIENT_SECRET=...
-python scripts/export_workbooks.py --push --dry-run               # ask Sigma to validate, create nothing
-python scripts/export_workbooks.py --push                         # create / update the workbooks
-```
-
-`--check` fails on an unresolved data model id, a missing `folderId`, duplicate element ids, or a warehouse source without a connection.
-
-To **update** instead of creating another workbook, pass `sigma_workbook.workbook(..., workbook_id='<id>')`; the script sends `PUT /v2/workbooks/{id}/contents`. This creates a new version, and hand edits in Sigma to the same elements are replaced.
-
-You can skip the script: the JSON is the exact body of [`POST /v2/workbooks`](https://help.sigmacomputing.com/reference/createworkbook).
-
-### Output format
-
-The default (`contents`) is Sigma's current API shape. `sigma_workbook_format: spec` (or `workbook(..., output='spec')`) emits the older nested shape used by the deprecated `/v2/workbooks/spec` endpoints:
-
-| | `contents` (default) | `spec` |
-| --- | --- | --- |
-| Shape | `{name, folderId, description, contents: {schemaVersion, kind, pages, elements, settings, layout}}` | `{name, schemaVersion, folderId, pages: [{id, name, elements}], settings, layout}` |
-| Endpoint | `POST /v2/workbooks`, `PUT /v2/workbooks/{id}/contents` | `POST /v2/workbooks/spec`, `PUT /v2/workbooks/{id}/spec` |
-| Layout tags | `<Element>` / `<Container>` | `<LayoutElement>` / `<GridContainer>` |
-
-The push script picks the endpoint from the shape, and the package emits the right layout tags for each (the current endpoint rejects the legacy ones).
-
 ## Macro reference
 
 Full signatures are in [`macros/schema.yml`](macros/schema.yml). Highlights:
@@ -341,7 +307,7 @@ An initial version aimed at dashboards. Coverage, unmodeled elements and known l
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
-pip install -r ci/requirements-dbt1.txt        # or ci/requirements-dbt2.txt for dbt 2.x
+pip install -r ci/requirements-dbt1.txt
 bash scripts/run_integration_tests_duckdb.sh   # the whole suite; no credentials needed
 python -m unittest scripts/test_export_workbooks.py
 ```
