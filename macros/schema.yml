@@ -842,6 +842,127 @@ macros:
         type: list[any]
         description: Control elements. Default `[]`.
 
+  - name: dashboard_page
+    description: "One page laid out as title -> filters -> KPI band -> chart rows -> extra elements -> detail table, from data alone. The body of `simple_dashboard` and the building block for `executive_scorecard`, `leaderboard` and `report`. Returns a page for `workbook()`."
+    arguments:
+      - name: name
+        type: string
+        description: Page name (also the title).
+      - name: source
+        type: any
+        description: A sigma_workbook source.
+      - name: kpis
+        type: list[any]
+        description: "List of `{value, name, format, compare_to, timeline, period, trend, direction, key}` mappings. Default `[]`."
+      - name: charts
+        type: list[any]
+        description: "List of chart mappings (see `simple_dashboard`; bar charts also take `horizontal` and `labels`). Default `[]`."
+      - name: filters
+        type: list[any]
+        description: "List of `{type, name, column}` mappings, wired to every element on the page. Default `[]`."
+      - name: table_columns
+        type: list[any]
+        description: Fields for the detail table. Omit for no table.
+      - name: subtitle
+        type: string
+        description: Muted line under the title.
+      - name: table_name
+        type: string
+        description: Title of the detail table. Default `Detail`.
+      - name: extras
+        type: list[any]
+        description: Elements you built yourself (a pivot table, a `raw` element), each on its own row after the charts, and filtered like the rest. Default `[]`.
+      - name: scope
+        type: string
+        description: Prefixes default element keys and control ids so several pages can live in one workbook. `report` sets it to the page name.
+      - name: kpi_h
+        type: int
+        description: Height of the KPI band in rows. Default 5.
+      - name: chart_h
+        type: int
+        description: Common height for chart rows. Default is each chart's own height.
+      - name: charts_per_row
+        type: int
+        description: How many charts share a row. Default 2.
+      - name: where
+        type: string
+        description: Names the caller in error messages. Default `dashboard_page`.
+
+  - name: executive_scorecard
+    description: "A one-page executive scorecard: title -> filters -> 1-5 large KPIs (a KPI with a `timeline` shows a sparkline by default) -> 1-2 trend charts. No detail table; more than five KPIs or two charts is refused (use `simple_dashboard`)."
+    arguments:
+      - name: name
+        type: string
+        description: Workbook and page name.
+      - name: source
+        type: any
+        description: A sigma_workbook source.
+      - name: kpis
+        type: list[any]
+        description: "1 to 5 `{value, name, format, compare_to, timeline, period, trend}` mappings."
+      - name: charts
+        type: list[any]
+        description: "Up to 2 chart mappings, as in `simple_dashboard`. Default `[]`."
+      - name: filters
+        type: list[any]
+        description: "List of `{type, name, column}` mappings. Default `[]`."
+      - name: subtitle
+        type: string
+        description: Muted line under the title.
+      - name: theme
+        type: dict[string,any]
+        description: Per-workbook theme overrides. Default `{}`.
+
+  - name: leaderboard
+    description: "A ranking dashboard: title -> filters -> KPI band -> one horizontal bar chart per dimension, ranked by `measure` with data labels -> an optional breakdown pivot table."
+    arguments:
+      - name: name
+        type: string
+        description: Workbook and page name.
+      - name: source
+        type: any
+        description: A sigma_workbook source.
+      - name: dimensions
+        type: list[any]
+        description: Fields to rank (a region, a rep, a product). One chart each. Must not be empty.
+      - name: measure
+        type: any
+        description: The field to rank by, e.g. `Sum([Amount])`.
+      - name: measure_name
+        type: string
+        description: Label used in chart titles. Defaults to the measure's name or formula.
+      - name: kpis
+        type: list[any]
+        description: "KPI mappings, as in `simple_dashboard`. Default `[]`."
+      - name: detail_measures
+        type: list[any]
+        description: Extra measures; if given, a pivot table breaks the first dimension down by `measure` and these. Default `[]`.
+      - name: filters
+        type: list[any]
+        description: "List of `{type, name, column}` mappings. Default `[]`."
+      - name: subtitle
+        type: string
+        description: Muted line under the title.
+      - name: theme
+        type: dict[string,any]
+        description: Per-workbook theme overrides. Default `{}`.
+
+  - name: report
+    description: "A multi-page report: every page is laid out like `simple_dashboard` and has its own filters. Names, control ids and element keys are scoped to the page, so the same KPI or filter can appear on several pages; a control filters only its own page."
+    arguments:
+      - name: name
+        type: string
+        description: Workbook name.
+      - name: source
+        type: any
+        description: The default source for every page.
+      - name: pages
+        type: list[any]
+        description: "List of page mappings: `name` (required, unique) and any of `kpis`, `charts`, `filters`, `table_columns`, `table_name`, `subtitle`, `extras`, and `source` to override the report's. Must not be empty."
+      - name: theme
+        type: dict[string,any]
+        description: Per-workbook theme overrides. Default `{}`.
+
   # ---------------------------------------------------------------- escape hatches
   - name: extend
     description: Deep-merges raw Sigma properties onto an element built by a normal macro. Updates in place and returns the element.

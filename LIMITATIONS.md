@@ -10,3 +10,4 @@ An initial version aimed at dashboards.
 - **Formulas are strings**; the package cannot check them against your data.
 - **Workbook-level `theme=`** changes colors, palettes, fonts and page width; `cards` is project-level.
 - One `sigma_workbook` per model; other `meta` keys are lost to `materialize()`.
+- **Dashboard styles**: `leaderboard` ranks its bar charts (largest first) but its breakdown pivot keeps Sigma's default order, and there is no top-N cut-off. `report` filters are per page (Sigma controls live on a page); there is no one filter that drives every page. Funnel, waterfall, gauge and cohort/heat-map styles need elements that aren't modeled (see above).
