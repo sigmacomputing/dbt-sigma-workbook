@@ -6,16 +6,20 @@ on:
   pull_request:
     branches: [main]
 
+permissions: {}
+
 jobs:
   # The whole suite on dbt 1.x with DuckDB. --warn-error turns any dbt deprecation or macro-argument
   # warning into a failure, so the package stays clean as dbt tightens its checks.
   test-dbt-1x:
     name: dbt 1.x (DuckDB)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
 
@@ -34,11 +38,13 @@ jobs:
   # The same suite on dbt 2.x. This is the job that backs the "supports dbt 2" claim in the README.
   test-dbt-2x:
     name: dbt 2.x (DuckDB)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
 
