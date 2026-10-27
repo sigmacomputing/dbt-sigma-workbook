@@ -1,6 +1,6 @@
 # Integration tests
 
-A runnable example project: one seed (`orders`), a staging model, one Sigma data model (composed with the companion [`sigma_data_models`](https://github.com/Matts52/dbt-sigma-data-models) package), and four workbook models that exercise the library in different ways. It doubles as a set of copy-pasteable examples.
+A runnable example project: one seed (`orders`), a staging model, one Sigma data model (composed with the companion [`sigma_data_models`](https://github.com/sigmacomputing/dbt-sigma-data-model) package), and four workbook models that exercise the library in different ways. It doubles as a set of copy-pasteable examples.
 
 ## Run
 
