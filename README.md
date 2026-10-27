@@ -1,6 +1,6 @@
 # dbt-sigma-workbook
 
-Compose [Sigma workbooks](https://help.sigmacomputing.com/docs/manage-workbooks-as-code) from dbt macros instead of hand-writing Sigma's JSON. A workbook is a dbt model: it can `ref()` your dbt models and the tables of your [Sigma data models](https://github.com/Matts52/dbt-sigma-data-models), it is reviewed like the rest of your project, and its compiled spec lands in `manifest.json` on `dbt parse`.
+Compose [Sigma workbooks](https://help.sigmacomputing.com/docs/manage-workbooks-as-code) from dbt macros instead of hand-writing Sigma's JSON. A workbook is a dbt model: it can `ref()` your dbt models and the tables of your [Sigma data models](https://github.com/sigmacomputing/dbt-sigma-data-model), it is reviewed like the rest of your project, and its compiled spec lands in `manifest.json` on `dbt parse`.
 
 ```sql
 -- models/sigma_sales_dashboard.sql
@@ -43,11 +43,11 @@ Not on the dbt Package Hub yet; install from git in `packages.yml`:
 
 ```yaml
 packages:
-  - git: "https://github.com/Matts52/dbt-sigma-workbook.git"
+  - git: "https://github.com/sigmacomputing/dbt-sigma-workbook.git"
     revision: main            # pin a tag or commit for reproducible builds
 ```
 
-To reference Sigma data model tables, also install [`Matts52/dbt-sigma-data-models`](https://github.com/Matts52/dbt-sigma-data-models) (optional).
+To reference Sigma data model tables, also install [`sigmacomputing/dbt-sigma-data-model`](https://github.com/sigmacomputing/dbt-sigma-data-model) (optional).
 
 ## Setup
 
@@ -192,7 +192,7 @@ Every element takes a `source`; the three kinds are interchangeable.
 
 ### From a Sigma data model
 
-If the data model is composed with [`dbt-sigma-data-models`](https://github.com/Matts52/dbt-sigma-data-models):
+If the data model is composed with [`dbt-sigma-data-models`](https://github.com/sigmacomputing/dbt-sigma-data-model):
 
 ```sql
 {% set sales = sigma_workbook.from_data_model('sigma_sales_model', 'orders', identifier='stg_orders') %}
